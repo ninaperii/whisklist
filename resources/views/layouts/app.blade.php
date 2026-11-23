@@ -8,17 +8,13 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-screen bg-stone-100 text-stone-900 antialiased">
-        <main class="mx-auto flex min-h-screen max-w-7xl items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-            <div class="w-full max-w-md">
-                <a class="mb-8 block text-center text-3xl font-semibold tracking-tight text-orange-700" href="{{ route('home') }}">
-                    WhiskList
-                </a>
+    <body class="flex min-h-screen flex-col bg-stone-100 text-stone-900 antialiased">
+        <x-site-header />
 
-                <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200 sm:p-8">
-                    @yield('content')
-                </div>
-            </div>
+        <main class="flex-1">
+            @yield('content')
         </main>
+
+        <x-site-footer />
     </body>
 </html>

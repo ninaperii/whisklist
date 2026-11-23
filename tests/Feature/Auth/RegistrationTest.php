@@ -32,7 +32,7 @@ class RegistrationTest extends TestCase
             'role' => 'admin',
         ]);
 
-        $response->assertRedirect(route('home'));
+        $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticated();
 
         $user = User::where('email', 'nina@example.com')->firstOrFail();
@@ -64,6 +64,6 @@ class RegistrationTest extends TestCase
         $response = $this->actingAs(User::factory()->create())
             ->get(route('register'));
 
-        $response->assertRedirect(route('home'));
+        $response->assertRedirect(route('dashboard'));
     }
 }

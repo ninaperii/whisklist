@@ -3,6 +3,8 @@
 @section('title', 'Log in | WhiskList')
 
 @section('content')
+<section class="mx-auto max-w-md px-4 py-12 sm:px-6">
+    <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200 sm:p-8">
     <h1 class="text-2xl font-semibold">Welcome back</h1>
     <p class="mt-2 text-sm text-stone-600">Log in to share recipes, comment, and open your WhiskList.</p>
 
@@ -55,4 +57,6 @@
         New to WhiskList?
         <a class="font-semibold text-orange-700 hover:text-orange-800" href="{{ route('register') }}">Create an account</a>
     </p>
+    </div>
+</section>
 @endsection

@@ -29,7 +29,7 @@ class AuthenticationTest extends TestCase
             'password' => 'password',
         ]);
 
-        $response->assertRedirect(route('home'));
+        $response->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($user);
     }
 
@@ -54,7 +54,7 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs(User::factory()->create())
             ->get(route('login'));
 
-        $response->assertRedirect(route('home'));
+        $response->assertRedirect(route('dashboard'));
     }
 
     #[Test]
