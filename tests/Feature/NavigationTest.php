@@ -30,6 +30,7 @@ class NavigationTest extends TestCase
             ->get(route('home'))
             ->assertOk()
             ->assertSee(route('dashboard'), escape: false)
+            ->assertSee(route('users.show', $user), escape: false)
             ->assertSee(route('logout'), escape: false)
             ->assertDontSee(route('login'), escape: false)
             ->assertDontSee(route('register'), escape: false);

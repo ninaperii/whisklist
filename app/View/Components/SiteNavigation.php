@@ -37,6 +37,11 @@ class SiteNavigation extends Component
                 'url' => route('dashboard'),
                 'active' => request()->routeIs('dashboard'),
             ];
+            $links[] = [
+                'label' => 'Profile',
+                'url' => route('users.show', Auth::id()),
+                'active' => request()->routeIs('users.show', 'profile.*'),
+            ];
         }
 
         return $links;

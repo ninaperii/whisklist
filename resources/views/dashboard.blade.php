@@ -12,7 +12,11 @@
             </div>
 
             <div class="rounded-lg bg-white px-4 py-3 text-sm ring-1 ring-stone-200">
-                Profile visibility: <span class="font-semibold">{{ $profileVisibility }}</span>
+                <p>Profile visibility: <span class="font-semibold">{{ $profileVisibility }}</span></p>
+                <div class="mt-2 flex gap-3">
+                    <a class="font-semibold text-orange-700 hover:text-orange-800" href="{{ route('users.show', $user) }}">View</a>
+                    <a class="font-semibold text-orange-700 hover:text-orange-800" href="{{ route('profile.edit') }}">Edit</a>
+                </div>
             </div>
         </div>
 
