@@ -30,7 +30,8 @@
         <div class="mt-8 grid gap-6 md:grid-cols-2">
             <section class="rounded-2xl border border-dashed border-stone-300 p-8">
                 <h2 class="text-lg font-semibold">Categories and ingredients</h2>
-                <p class="mt-2 text-sm leading-6 text-stone-600">Management tools will appear here after the cooking-domain models are implemented.</p>
+                <p class="mt-2 text-sm leading-6 text-stone-600">Maintain the canonical lists used to organize and filter recipes.</p>
+                <div class="mt-4 flex flex-wrap gap-4"><a class="font-semibold text-orange-700" href="{{ route('admin.categories.index') }}">Categories</a><a class="font-semibold text-orange-700" href="{{ route('admin.ingredients.index') }}">Ingredients</a><a class="font-semibold text-orange-700" href="{{ route('admin.dietary-tags.index') }}">Dietary tags</a><a class="font-semibold text-orange-700" href="{{ route('admin.allergens.index') }}">Allergens</a></div>
             </section>
 
             <section class="rounded-2xl border border-dashed border-stone-300 p-8">

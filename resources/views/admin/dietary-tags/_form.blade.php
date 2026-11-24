@@ -1,0 +1,4 @@
+@csrf
+<div><label class="block text-sm font-medium" for="name">Name</label><input class="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2" id="name" name="name" value="{{ old('name', $dietaryTag?->name) }}" required>@error('name')<p class="mt-2 text-sm text-red-700">{{ $message }}</p>@enderror</div>
+<div><label class="block text-sm font-medium" for="description">Description</label><textarea class="mt-2 min-h-32 w-full rounded-lg border border-stone-300 px-3 py-2" id="description" name="description">{{ old('description', $dietaryTag?->description) }}</textarea>@error('description')<p class="mt-2 text-sm text-red-700">{{ $message }}</p>@enderror</div>
+<div class="flex gap-3"><button class="rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white">{{ $submitLabel }}</button><a class="rounded-lg border px-5 py-2.5 font-semibold" href="{{ route('admin.dietary-tags.index') }}">Cancel</a></div>

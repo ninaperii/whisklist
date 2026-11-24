@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AllergenController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\DietaryTagController;
+use App\Http\Controllers\Admin\IngredientController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\DashboardController;
@@ -41,4 +45,8 @@ Route::prefix('admin')
     ->middleware(['auth', 'admin'])
     ->group(function () {
         Route::get('/', AdminDashboardController::class)->name('dashboard');
+        Route::resource('categories', CategoryController::class)->except('show');
+        Route::resource('ingredients', IngredientController::class)->except('show');
+        Route::resource('dietary-tags', DietaryTagController::class)->except('show');
+        Route::resource('allergens', AllergenController::class)->except('show');
     });
