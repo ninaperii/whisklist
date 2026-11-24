@@ -42,6 +42,14 @@ class SiteNavigation extends Component
                 'url' => route('users.show', Auth::id()),
                 'active' => request()->routeIs('users.show', 'profile.*'),
             ];
+
+            if (Auth::user()?->isAdmin()) {
+                $links[] = [
+                    'label' => 'Admin',
+                    'url' => route('admin.dashboard'),
+                    'active' => request()->routeIs('admin.*'),
+                ];
+            }
         }
 
         return $links;
