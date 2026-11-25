@@ -17,6 +17,52 @@ class PublicRecipeTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
+    public function visitors_can_combine_search_and_filters_and_exclude_nested_category_branches(): void
+    {
+        $dessert = Category::factory()->create(['name' => 'Desserts']);
+        $pies = Category::factory()->for($dessert, 'parent')->create(['name' => 'Pies']);
+        $fruitPies = Category::factory()->for($pies, 'parent')->create(['name' => 'Fruit pies']);
+        $cakes = Category::factory()->for($dessert, 'parent')->create(['name' => 'Cakes']);
+        $lemon = Ingredient::factory()->create(['name' => 'Lemon']);
+        $sugar = Ingredient::factory()->create(['name' => 'Sugar']);
+        $glutenFree = DietaryTag::factory()->create(['name' => 'Gluten-free']);
+        $vegetarian = DietaryTag::factory()->create(['name' => 'Vegetarian']);
+
+        $cake = Recipe::factory()->published()->create(['title' => 'Lemon layer cake']);
+        $pie = Recipe::factory()->published()->create(['title' => 'Lemon meringue pie']);
+        $plain = Recipe::factory()->published()->create(['title' => 'Lemon sponge']);
+        foreach ([[$cake, $cakes], [$pie, $fruitPies]] as [$recipe, $category]) {
+            $recipe->categories()->attach($category);
+            $recipe->ingredients()->attach([$lemon->id => ['position' => 1], $sugar->id => ['position' => 2]]);
+            $recipe->dietaryTags()->attach([$glutenFree->id, $vegetarian->id]);
+        }
+        $plain->categories()->attach($cakes);
+        $plain->ingredients()->attach($lemon, ['position' => 1]);
+        $plain->dietaryTags()->attach($glutenFree);
+
+        $filters = [
+            'q' => 'LEMON',
+            'categories' => [$dessert->id],
+            'ingredients' => [$lemon->id, $sugar->id],
+            'dietary_tags' => [$glutenFree->id, $vegetarian->id],
+        ];
+
+        $this->get(route('recipes.index', $filters))->assertOk()
+            ->assertSee($cake->title)->assertSee($pie->title)->assertDontSee($plain->title);
+        $this->get(route('recipes.index', $filters + ['exclude_categories' => [$pies->id]]))->assertOk()
+            ->assertSee($cake->title)->assertDontSee($pie->title);
+        $this->get(route('recipes.index', $filters + ['exclude_categories' => [$dessert->id]]))
+            ->assertRedirect(route('recipes.index'))->assertSessionHasErrors('category_conflict');
+        $this->get(route('recipes.index', ['q' => 'Lemon', 'ingredients' => [$lemon->id], 'exclude_ingredients' => [$sugar->id]]))
+            ->assertOk()->assertSee($plain->title)->assertDontSee($cake->title)->assertDontSee($pie->title);
+        $this->get(route('recipes.index', ['ingredients' => [$lemon->id], 'exclude_ingredients' => [$lemon->id]]))
+            ->assertRedirect(route('recipes.index'))->assertSessionHasErrors('ingredient_conflict');
+        $this->get(route('recipes.index', ['q' => '%']))->assertOk()->assertSee('No recipes match these filters.');
+        $this->get(route('recipes.index', ['ingredients' => 'invalid']))->assertRedirect(route('recipes.index'))
+            ->assertSessionHasErrors('ingredients');
+    }
+
+    #[Test]
     public function guests_can_browse_published_recipes_across_multiple_pages(): void
     {
         $older = Recipe::factory()->published()->create(['title' => 'Oldest published tart', 'published_at' => now()->subDay()]);
