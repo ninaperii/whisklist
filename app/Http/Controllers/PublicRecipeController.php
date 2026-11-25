@@ -7,6 +7,18 @@ use Illuminate\View\View;
 
 class PublicRecipeController extends Controller
 {
+    public function index(): View
+    {
+        return view('recipes.index', [
+            'recipes' => Recipe::query()
+                ->published()
+                ->with('thumbnail')
+                ->orderByDesc('published_at')
+                ->orderByDesc('id')
+                ->paginate(12),
+        ]);
+    }
+
     public function show(string $recipe): View
     {
         $publishedRecipe = Recipe::query()

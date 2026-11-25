@@ -17,6 +17,30 @@ class PublicRecipeTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
+    public function guests_can_browse_published_recipes_across_multiple_pages(): void
+    {
+        $older = Recipe::factory()->published()->create(['title' => 'Oldest published tart', 'published_at' => now()->subDay()]);
+        Recipe::factory()->published()->count(11)->create();
+        $newer = Recipe::factory()->published()->create(['title' => 'Newest published pancakes']);
+        $newer->thumbnail()->create(['path' => 'recipe-thumbnails/pancakes.png', 'is_thumbnail' => true]);
+        $draft = Recipe::factory()->create(['title' => 'Private pie draft']);
+        $future = Recipe::factory()->published()->create(['title' => 'Scheduled pie', 'published_at' => now()->addDay()]);
+
+        $this->get(route('recipes.index'))
+            ->assertOk()
+            ->assertSee(route('recipes.show', $newer), false)
+            ->assertSee(route('recipes.thumbnail', $newer), false)
+            ->assertDontSee($older->title)
+            ->assertDontSee($draft->title)
+            ->assertDontSee($future->title);
+
+        $this->get(route('recipes.index', ['page' => 2]))
+            ->assertOk()
+            ->assertSee($older->title)
+            ->assertDontSee($newer->title);
+    }
+
+    #[Test]
     public function the_homepage_links_to_recent_published_recipes_only(): void
     {
         $older = Recipe::factory()->published()->create(['title' => 'Lemon tart', 'published_at' => now()->subDay()]);

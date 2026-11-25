@@ -30,25 +30,16 @@
     </section>
 
     <section class="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <h2 class="mb-6 text-2xl font-semibold">Latest recipes</h2>
+        <div class="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+            <h2 class="text-2xl font-semibold">Latest recipes</h2>
+            <a class="font-semibold text-orange-700 hover:underline" href="{{ route('recipes.index') }}">Browse all recipes</a>
+        </div>
         @if ($latestRecipes->isEmpty())
             <p class="rounded-2xl bg-white p-6 text-stone-600 ring-1 ring-stone-200">No recipes have been published yet.</p>
         @else
             <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($latestRecipes as $recipe)
-                    <li class="overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200">
-                        <a class="group block" href="{{ route('recipes.show', $recipe) }}">
-                            @if ($recipe->thumbnail)
-                                <img class="aspect-video w-full object-cover" src="{{ route('recipes.thumbnail', $recipe) }}" alt="{{ $recipe->thumbnail->alt_text ?? '' }}" loading="lazy">
-                            @endif
-                            <div class="p-5">
-                                <h3 class="text-lg font-semibold group-hover:underline">{{ $recipe->title }}</h3>
-                                @if ($recipe->summary !== '')
-                                    <p class="mt-2 line-clamp-2 text-sm text-stone-600">{{ $recipe->summary }}</p>
-                                @endif
-                            </div>
-                        </a>
-                    </li>
+                    <x-recipe-card :recipe="$recipe" />
                 @endforeach
             </ul>
         @endif

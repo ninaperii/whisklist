@@ -16,6 +16,7 @@ use App\Http\Controllers\RecipeThumbnailController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
+Route::get('/recipes', [PublicRecipeController::class, 'index'])->name('recipes.index');
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');

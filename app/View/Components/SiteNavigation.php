@@ -29,6 +29,11 @@ class SiteNavigation extends Component
                 'url' => route('home'),
                 'active' => request()->routeIs('home'),
             ],
+            [
+                'label' => 'Recipes',
+                'url' => route('recipes.index'),
+                'active' => request()->routeIs('recipes.index', 'recipes.show'),
+            ],
         ];
 
         if (Auth::check()) {
