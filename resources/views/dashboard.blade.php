@@ -24,15 +24,14 @@
             <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200">
                 <p class="text-sm font-semibold text-orange-700">Published</p>
                 <h2 class="mt-2 text-xl font-semibold">My recipes</h2>
-                <p class="mt-3 text-sm leading-6 text-stone-600">Your published recipes will appear here once recipe creation is available.</p>
-                <p class="mt-6 text-3xl font-semibold">0</p>
+                <p class="mt-6 text-3xl font-semibold">{{ $publishedCount }}</p>
             </section>
 
             <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200">
                 <p class="text-sm font-semibold text-orange-700">In progress</p>
                 <h2 class="mt-2 text-xl font-semibold">Drafts</h2>
-                <p class="mt-3 text-sm leading-6 text-stone-600">Recipes you are still preparing will be collected here.</p>
-                <p class="mt-6 text-3xl font-semibold">0</p>
+                <p class="mt-6 text-3xl font-semibold">{{ $draftCount }}</p>
+                <a class="mt-3 inline-block font-semibold text-orange-700" href="{{ route('recipes.mine') }}">View drafts</a>
             </section>
 
             <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200">
@@ -43,9 +42,6 @@
             </section>
         </div>
 
-        <section class="mt-8 rounded-2xl border border-dashed border-stone-300 p-8 text-center">
-            <h2 class="text-lg font-semibold">Recipe creation is coming next</h2>
-            <p class="mt-2 text-sm text-stone-600">The dashboard is ready to display real recipe and favorite data as those features are implemented.</p>
-        </section>
+        <a class="mt-8 inline-block rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white" href="{{ route('recipes.create') }}">Create recipe</a>
     </section>
 @endsection

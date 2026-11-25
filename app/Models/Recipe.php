@@ -93,7 +93,7 @@ class Recipe extends Model
 
     private function uniqueSlug(): string
     {
-        $baseSlug = Str::slug($this->title);
+        $baseSlug = rtrim(Str::limit(Str::slug($this->title), 240, ''), '-');
         $baseSlug = $baseSlug !== '' ? $baseSlug : 'recipe';
         $slug = $baseSlug;
         $suffix = 2;

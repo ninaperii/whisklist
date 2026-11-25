@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RecipeDraftController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -36,6 +37,8 @@ Route::get('/users/{user}', [ProfileController::class, 'show'])
     ->name('users.show');
 
 Route::middleware('auth')->group(function () {
+    Route::resource('recipes', RecipeDraftController::class)->only(['create', 'store', 'edit', 'update']);
+    Route::get('/my-recipes', [RecipeDraftController::class, 'index'])->name('recipes.mine');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
