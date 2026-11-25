@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Str;
 
 #[Fillable(['user_id', 'title', 'slug', 'summary', 'preparation_minutes', 'cooking_minutes', 'servings', 'difficulty', 'status', 'published_at'])]
@@ -71,6 +72,11 @@ class Recipe extends Model
         return $this->hasMany(RecipeStep::class)->orderBy('position');
     }
 
+    public function thumbnail(): MorphOne
+    {
+        return $this->morphOne(Image::class, 'imageable')->where('is_thumbnail', true);
+    }
+
     public function scopePublished(Builder $query): Builder
     {
         return $query
@@ -88,7 +94,7 @@ class Recipe extends Model
     {
         return $this->status === RecipeStatus::Published
             && $this->published_at !== null
-            && $this->published_at->isPast();
+            && $this->published_at->lte(now());
     }
 
     private function uniqueSlug(): string
@@ -98,7 +104,7 @@ class Recipe extends Model
         $slug = $baseSlug;
         $suffix = 2;
 
-        while (static::query()
+        while ($slug === 'create' || static::query()
             ->where('slug', $slug)
             ->when($this->exists, fn (Builder $query): Builder => $query->whereKeyNot($this->getKey()))
             ->exists()) {

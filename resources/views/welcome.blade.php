@@ -27,14 +27,30 @@
             </div>
         </div>
 
-        <div class="rounded-3xl bg-orange-100 p-8 ring-1 ring-orange-200 sm:p-12">
-            <div class="rounded-2xl bg-white p-8 shadow-sm">
-                <p class="text-sm font-semibold text-orange-700">WhiskList is being prepared</p>
-                <h2 class="mt-3 text-2xl font-semibold">Recipe discovery comes next</h2>
-                <p class="mt-4 leading-7 text-stone-600">
-                    Soon you will be able to browse recipes by category and find meals using ingredients you already have.
-                </p>
-            </div>
-        </div>
+    </section>
+
+    <section class="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+        <h2 class="mb-6 text-2xl font-semibold">Latest recipes</h2>
+        @if ($latestRecipes->isEmpty())
+            <p class="rounded-2xl bg-white p-6 text-stone-600 ring-1 ring-stone-200">No recipes have been published yet.</p>
+        @else
+            <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($latestRecipes as $recipe)
+                    <li class="overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200">
+                        <a class="group block" href="{{ route('recipes.show', $recipe) }}">
+                            @if ($recipe->thumbnail)
+                                <img class="aspect-video w-full object-cover" src="{{ route('recipes.thumbnail', $recipe) }}" alt="{{ $recipe->thumbnail->alt_text ?? '' }}" loading="lazy">
+                            @endif
+                            <div class="p-5">
+                                <h3 class="text-lg font-semibold group-hover:underline">{{ $recipe->title }}</h3>
+                                @if ($recipe->summary !== '')
+                                    <p class="mt-2 line-clamp-2 text-sm text-stone-600">{{ $recipe->summary }}</p>
+                                @endif
+                            </div>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
     </section>
 @endsection

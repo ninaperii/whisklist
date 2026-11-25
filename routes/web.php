@@ -10,7 +10,9 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicRecipeController;
 use App\Http\Controllers\RecipeDraftController;
+use App\Http\Controllers\RecipeThumbnailController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -42,6 +44,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
+
+Route::get('/recipes/{recipe}', [PublicRecipeController::class, 'show'])->name('recipes.show');
+Route::get('/recipes/{recipe}/thumbnail', RecipeThumbnailController::class)->name('recipes.thumbnail');
 
 Route::prefix('admin')
     ->name('admin.')

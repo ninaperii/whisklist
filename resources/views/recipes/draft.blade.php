@@ -36,7 +36,7 @@
             </div>
         @endif
 
-        <form class="space-y-6" method="POST" action="{{ $recipe->exists ? route('recipes.update', $recipe) : route('recipes.store') }}">
+        <form class="space-y-6" method="POST" enctype="multipart/form-data" action="{{ $recipe->exists ? route('recipes.update', $recipe) : route('recipes.store') }}">
             @csrf
             @if ($recipe->exists)
                 @method('PUT')
@@ -114,7 +114,23 @@
                 <button class="rounded-lg border border-stone-300 px-4 py-2 font-semibold" type="button" data-add>+ Add step</button>
             </section>
 
-            <button class="rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white" type="submit">Save draft</button>
+            <section class="{{ $sectionClass }}">
+                <h2 class="text-xl font-semibold">Recipe thumbnail</h2>
+                @if ($recipe->thumbnail)
+                    <img class="aspect-video w-full max-w-sm rounded-lg object-cover" src="{{ route('recipes.thumbnail', $recipe) }}" alt="Current thumbnail for {{ $recipe->title }}">
+                @endif
+                <label class="block">
+                    {{ $recipe->thumbnail ? 'Replace thumbnail' : 'Upload a thumbnail' }}
+                    <input class="{{ $inputClass }}" type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp">
+                </label>
+                <p class="text-sm text-stone-600">JPEG, PNG, or WebP. Up to 2 MB.</p>
+            </section>
+
+            <div class="flex flex-wrap gap-3">
+                <button class="rounded-lg border border-stone-300 bg-white px-5 py-2.5 font-semibold" type="submit" name="action" value="draft">Save draft</button>
+                <button class="rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white" type="submit" name="action" value="publish">Publish recipe</button>
+            </div>
+            <p class="text-sm text-stone-600">To publish, add a thumbnail and at least one category, ingredient, and instruction step.</p>
         </form>
     </section>
 @endsection
