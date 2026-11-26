@@ -4,8 +4,19 @@
 
 @section('content')
     <article class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+        <div class="mb-6">
+            @can('update', $recipe)
+                <a class="font-semibold text-orange-700 hover:underline" href="{{ route('recipes.mine') }}">← My recipes</a>
+            @else
+                <a class="font-semibold text-orange-700 hover:underline" href="{{ route('recipes.index') }}">← All recipes</a>
+            @endcan
+        </div>
+
         @if (session('status'))
-            <p role="status" class="mb-6 rounded-lg bg-green-50 p-4 text-green-800">{{ session('status') }}</p>
+            <p role="status" class="mb-6 rounded-lg bg-green-50 p-4 text-green-800"
+                @if (session('published_from_editor') && auth()->id() === $recipe->user_id)
+                    data-published-from="{{ session('published_from_editor') }}" data-published-editor="{{ route('recipes.edit', $recipe, false) }}"
+                @endif>{{ session('status') }}</p>
         @endif
         <header>
             <h1 class="text-4xl font-semibold tracking-tight">{{ $recipe->title }}</h1>

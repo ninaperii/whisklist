@@ -16,6 +16,7 @@ class RecipeTaxonomySeeder extends Seeder
     {
         DB::transaction(function (): void {
             $this->category('Breakfast');
+            $this->category('Other');
             $desserts = $this->category('Desserts');
             $this->category('Cakes', $desserts);
             $pies = $this->category('Pies', $desserts);

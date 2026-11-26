@@ -40,7 +40,8 @@ Route::get('/users/{user}', [ProfileController::class, 'show'])
     ->name('users.show');
 
 Route::middleware('auth')->group(function () {
-    Route::resource('recipes', RecipeDraftController::class)->only(['create', 'store', 'edit', 'update']);
+    Route::resource('recipes', RecipeDraftController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
+    Route::patch('/recipes/{recipe}/unpublish', [RecipeDraftController::class, 'unpublish'])->name('recipes.unpublish');
     Route::get('/my-recipes', [RecipeDraftController::class, 'index'])->name('recipes.mine');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');

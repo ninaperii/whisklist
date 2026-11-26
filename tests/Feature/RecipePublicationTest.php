@@ -18,6 +18,50 @@ class RecipePublicationTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
+    public function owners_can_edit_unpublish_and_delete_recipes(): void
+    {
+        $storage = Storage::fake('local');
+        $author = User::factory()->create();
+        $recipe = Recipe::factory()->published()->for($author, 'author')->create(['title' => 'My published pancakes']);
+        $draft = Recipe::factory()->for($author, 'author')->create();
+        $anotherRecipe = Recipe::factory()->published()->create();
+        $thumbnail = $recipe->thumbnail()->create(['path' => 'recipe-thumbnails/pancakes.png', 'is_thumbnail' => true]);
+        $storage->put($thumbnail->path, 'thumbnail');
+        $publishedAt = $recipe->published_at;
+        $publicUrl = route('recipes.show', $recipe);
+        $editUrl = route('recipes.edit', $recipe);
+        $updateUrl = route('recipes.update', $recipe);
+        $unpublishUrl = route('recipes.unpublish', $recipe);
+        $deleteUrl = route('recipes.destroy', $recipe);
+        $data = $this->completeRecipe() + ['title' => 'Updated pancakes'];
+
+        $this->actingAs($anotherRecipe->author);
+        $this->get($editUrl)->assertForbidden();
+        $this->put($updateUrl, $data)->assertForbidden();
+        $this->patch($unpublishUrl)->assertForbidden();
+        $this->delete($deleteUrl)->assertForbidden();
+
+        $this->actingAs($author);
+        $this->get(route('recipes.mine'))->assertOk()->assertSee($recipe->title)->assertSee($draft->title)->assertDontSee($anotherRecipe->title);
+        $this->get(route('recipes.mine', ['status' => 'draft']))->assertOk()->assertSee($draft->title)->assertDontSee($recipe->title);
+        $this->get($editUrl)->assertOk()->assertSee('Save changes');
+        $this->put($updateUrl, array_diff_key($data, ['ingredients' => true]))->assertSessionHasErrors('ingredients');
+        $this->put($updateUrl, $data)->assertRedirect($publicUrl);
+        $this->get($publicUrl)->assertOk()->assertSee('Updated pancakes');
+        $this->assertEquals($publishedAt, $recipe->fresh()->published_at);
+
+        $this->patch($unpublishUrl)->assertRedirect(route('recipes.mine'));
+        $this->get($publicUrl)->assertNotFound();
+        $this->assertSame(RecipeStatus::Draft, $recipe->fresh()->status);
+        $storage->assertExists($thumbnail->path);
+
+        $this->delete($deleteUrl)->assertRedirect(route('recipes.mine'));
+        $this->assertModelMissing($recipe);
+        $this->assertModelMissing($thumbnail);
+        $storage->assertMissing($thumbnail->path);
+    }
+
+    #[Test]
     public function authors_can_replace_a_private_thumbnail_and_publish_with_the_saved_image(): void
     {
         $storage = Storage::fake('local');

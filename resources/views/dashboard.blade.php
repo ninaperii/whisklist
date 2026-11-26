@@ -25,13 +25,14 @@
                 <p class="text-sm font-semibold text-orange-700">Published</p>
                 <h2 class="mt-2 text-xl font-semibold">My recipes</h2>
                 <p class="mt-6 text-3xl font-semibold">{{ $publishedCount }}</p>
+                <a class="mt-3 inline-block font-semibold text-orange-700" href="{{ route('recipes.mine') }}">Manage my recipes</a>
             </section>
 
             <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200">
                 <p class="text-sm font-semibold text-orange-700">In progress</p>
                 <h2 class="mt-2 text-xl font-semibold">Drafts</h2>
                 <p class="mt-6 text-3xl font-semibold">{{ $draftCount }}</p>
-                <a class="mt-3 inline-block font-semibold text-orange-700" href="{{ route('recipes.mine') }}">View drafts</a>
+                <a class="mt-3 inline-block font-semibold text-orange-700" href="{{ route('recipes.mine', ['status' => 'draft']) }}">View drafts</a>
             </section>
 
             <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200">

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Str;
 
@@ -24,7 +25,9 @@ class Recipe extends Model
     protected static function booted(): void
     {
         static::saving(function (Recipe $recipe): void {
-            if ($recipe->slug === null || $recipe->isDirty('title')) {
+            if ($recipe->slug === null || ($recipe->isDirty('title')
+                && (! $recipe->exists || $recipe->status !== RecipeStatus::Published)
+                && $recipe->getRawOriginal('status') !== RecipeStatus::Published->value)) {
                 $recipe->slug = $recipe->uniqueSlug();
             }
         });
@@ -75,6 +78,11 @@ class Recipe extends Model
     public function thumbnail(): MorphOne
     {
         return $this->morphOne(Image::class, 'imageable')->where('is_thumbnail', true);
+    }
+
+    public function images(): MorphMany
+    {
+        return $this->morphMany(Image::class, 'imageable');
     }
 
     public function scopePublished(Builder $query): Builder

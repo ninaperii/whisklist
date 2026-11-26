@@ -1,12 +1,13 @@
 @extends('layouts.app')
 
-@section('title', $recipe->exists ? 'Edit recipe draft | WhiskList' : 'Create recipe | WhiskList')
+@section('title', $recipe->exists ? 'Edit recipe | WhiskList' : 'Create recipe | WhiskList')
 
 @section('content')
     @php
         $inputClass = 'mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2';
         $sectionClass = 'space-y-4 rounded-2xl bg-white p-5 ring-1 ring-stone-200 sm:p-6';
         $usingOldInput = session()->hasOldInput();
+        $isPublished = $recipe->status === \App\Enums\RecipeStatus::Published;
         $oldText = static function (string $field, mixed $fallback): string {
             $value = old($field, $fallback);
 
@@ -19,8 +20,8 @@
     @endphp
 
     <section class="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-        <a class="font-semibold text-orange-700" href="{{ route('recipes.mine') }}">← My drafts</a>
-        <h1 class="mb-6 mt-3 text-3xl font-semibold">{{ $recipe->exists ? 'Edit recipe draft' : 'Create recipe' }}</h1>
+        <a class="font-semibold text-orange-700" href="{{ route('recipes.mine') }}">← My recipes</a>
+        <h1 class="mb-6 mt-3 text-3xl font-semibold">{{ $recipe->exists ? 'Edit recipe' : 'Create recipe' }}</h1>
 
         @if (session('status'))
             <p role="status" class="mb-6 rounded-lg bg-green-50 p-4 text-green-800">{{ session('status') }}</p>
@@ -36,7 +37,7 @@
             </div>
         @endif
 
-        <form class="space-y-6" method="POST" enctype="multipart/form-data" action="{{ $recipe->exists ? route('recipes.update', $recipe) : route('recipes.store') }}">
+        <form class="space-y-6" method="POST" enctype="multipart/form-data" action="{{ $recipe->exists ? route('recipes.update', $recipe) : route('recipes.store') }}" data-recipe-editor @if ($usingOldInput) data-unsaved-input @endif>
             @csrf
             @if ($recipe->exists)
                 @method('PUT')
@@ -114,23 +115,57 @@
                 <button class="rounded-lg border border-stone-300 px-4 py-2 font-semibold" type="button" data-add>+ Add step</button>
             </section>
 
-            <section class="{{ $sectionClass }}">
+            <section class="{{ $sectionClass }}" data-thumbnail-picker>
                 <h2 class="text-xl font-semibold">Recipe thumbnail</h2>
-                @if ($recipe->thumbnail)
-                    <img class="aspect-video w-full max-w-sm rounded-lg object-cover" src="{{ route('recipes.thumbnail', $recipe) }}" alt="Current thumbnail for {{ $recipe->title }}">
-                @endif
-                <label class="block">
-                    {{ $recipe->thumbnail ? 'Replace thumbnail' : 'Upload a thumbnail' }}
-                    <input class="{{ $inputClass }}" type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp">
-                </label>
-                <p class="text-sm text-stone-600">JPEG, PNG, or WebP. Up to 2 MB.</p>
+                <div @if (! $recipe->thumbnail) hidden @endif data-thumbnail-preview>
+                    <img class="aspect-video w-full max-w-sm rounded-lg object-cover"
+                        @if ($recipe->thumbnail) src="{{ route('recipes.thumbnail', $recipe) }}" @endif
+                        alt="Thumbnail preview">
+                </div>
+                <div>
+                    <input class="peer sr-only" id="recipe-thumbnail" type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp" aria-describedby="thumbnail-help thumbnail-status">
+                    <label class="inline-block cursor-pointer rounded-lg border border-stone-300 px-4 py-2 font-semibold peer-focus-visible:ring-2 peer-focus-visible:ring-orange-700" for="recipe-thumbnail">
+                        Upload a picture
+                    </label>
+                </div>
+                <p id="thumbnail-help" class="text-sm text-stone-600">JPEG, PNG, or WebP, up to 2 MB.</p>
+                <p id="thumbnail-status" class="sr-only" role="status"></p>
             </section>
 
             <div class="flex flex-wrap gap-3">
-                <button class="rounded-lg border border-stone-300 bg-white px-5 py-2.5 font-semibold" type="submit" name="action" value="draft">Save draft</button>
-                <button class="rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white" type="submit" name="action" value="publish">Publish recipe</button>
+                @if ($isPublished)
+                    <button class="rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white" type="submit">Save changes</button>
+                @else
+                    <button class="rounded-lg border border-stone-300 bg-white px-5 py-2.5 font-semibold" type="submit" name="action" value="draft">Save draft</button>
+                @endif
+                <a class="rounded-lg border border-stone-300 bg-white px-5 py-2.5 font-semibold text-stone-700 hover:bg-stone-50" href="{{ route('recipes.mine') }}" data-discard-changes>Discard changes</a>
+                @unless ($isPublished)
+                    <button class="rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white" type="submit" name="action" value="publish">Publish recipe</button>
+                @endunless
             </div>
-            <p class="text-sm text-stone-600">To publish, add a thumbnail and at least one category, ingredient, and instruction step.</p>
+            @unless ($isPublished)
+                <p class="text-sm text-stone-600">To publish, add a thumbnail and at least one category, ingredient, and instruction step.</p>
+            @endunless
         </form>
+
+        @unless ($isPublished)
+            <dialog id="publish-recipe" aria-labelledby="publish-recipe-title" class="m-auto w-full max-w-sm rounded-2xl bg-white p-6 text-stone-900 shadow-lg backdrop:bg-stone-900/50">
+                <h2 id="publish-recipe-title" class="text-xl font-semibold">Publish this recipe?</h2>
+                <p class="mt-2 text-stone-600">Anyone will be able to view this recipe.</p>
+                <form method="dialog" class="mt-6 flex flex-wrap gap-3">
+                    <button class="rounded-lg border border-stone-300 px-4 py-2 font-semibold" value="cancel" autofocus>Cancel</button>
+                    <button class="rounded-lg bg-orange-700 px-4 py-2 font-semibold text-white" value="publish">Publish recipe</button>
+                </form>
+            </dialog>
+        @endunless
+
+        <dialog id="leave-recipe-editor" aria-labelledby="leave-recipe-title" class="m-auto w-full max-w-sm rounded-2xl bg-white p-6 text-stone-900 shadow-lg backdrop:bg-stone-900/50">
+            <h2 id="leave-recipe-title" class="text-xl font-semibold">Leave without saving?</h2>
+            <p class="mt-2 text-stone-600">Your unsaved changes will be discarded.</p>
+            <form method="dialog" class="mt-6 flex flex-wrap gap-3">
+                <button class="rounded-lg border border-stone-300 px-4 py-2 font-semibold" value="stay" autofocus>Keep editing</button>
+                <button class="rounded-lg bg-orange-700 px-4 py-2 font-semibold text-white" value="leave">Leave page</button>
+            </form>
+        </dialog>
     </section>
 @endsection
