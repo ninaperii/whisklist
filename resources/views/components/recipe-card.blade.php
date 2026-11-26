@@ -7,6 +7,7 @@
         @endif
         <div class="p-5">
             <{{ $heading }} class="text-lg font-semibold group-hover:underline">{{ $recipe->title }}</{{ $heading }}>
+            <p class="mt-1 text-sm text-stone-600">By {{ $recipe->author->name }}</p>
             @if ($recipe->summary !== '')
                 <p class="mt-2 line-clamp-2 text-sm text-stone-600">{{ $recipe->summary }}</p>
             @endif

@@ -65,7 +65,7 @@
                         <span>
                             <span class="block font-semibold">Public profile</span>
                             <span class="mt-1 block text-sm leading-6 text-stone-600">
-                                When disabled, only you and administrators can open your profile page. Your published recipes remain publicly discoverable.
+                                When disabled, visitors can still see your name, profile picture, and published recipes. Only you and administrators can see your bio.
                             </span>
                         </span>
                     </label>

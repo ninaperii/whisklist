@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Models\Recipe;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,23 +30,31 @@ class ProfileTest extends TestCase
     }
 
     #[Test]
-    public function guests_cannot_view_private_profiles(): void
+    public function guests_can_see_public_information_on_private_profiles(): void
     {
-        $user = User::factory()->privateProfile()->create();
+        $user = User::factory()->privateProfile()->create(['bio' => 'Hidden biography']);
 
         $this->get(route('users.show', $user))
-            ->assertForbidden();
+            ->assertOk()->assertSee($user->name)->assertSee('This profile is private.')->assertDontSee('Hidden biography');
     }
 
     #[Test]
-    public function other_users_cannot_view_private_profiles(): void
+    public function other_users_can_see_only_public_information_on_private_profiles(): void
     {
         $viewer = User::factory()->create();
-        $privateUser = User::factory()->privateProfile()->create();
+        $privateUser = User::factory()->privateProfile()->create(['bio' => 'Hidden biography', 'avatar_path' => 'avatars/cook.png']);
+        $published = Recipe::factory()->for($privateUser, 'author')->published()->create();
+        $draft = Recipe::factory()->for($privateUser, 'author')->create();
 
         $this->actingAs($viewer)
             ->get(route('users.show', $privateUser))
-            ->assertForbidden();
+            ->assertOk()
+            ->assertSee($privateUser->name)
+            ->assertSee(asset('storage/avatars/cook.png'), false)
+            ->assertSee('This profile is private.')
+            ->assertSee($published->title)
+            ->assertDontSee($draft->title)
+            ->assertDontSee('Hidden biography');
     }
 
     #[Test]

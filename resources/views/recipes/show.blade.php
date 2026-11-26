@@ -20,9 +20,14 @@
         @endif
         <header>
             <h1 class="text-4xl font-semibold tracking-tight">{{ $recipe->title }}</h1>
-            @if ($recipe->author->is_profile_public)
-                <p class="mt-2 text-stone-600">By <a class="font-semibold text-orange-700 hover:underline" href="{{ route('users.show', $recipe->author) }}">{{ $recipe->author->name }}</a></p>
-            @endif
+            <div class="mt-3 flex items-center gap-3 text-sm font-semibold text-stone-700">
+                @if ($recipe->author->avatar_path)
+                    <img class="size-10 shrink-0 rounded-full object-cover" src="{{ asset('storage/'.$recipe->author->avatar_path) }}" alt="">
+                @else
+                    <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-800" aria-hidden="true">{{ str($recipe->author->name)->substr(0, 1)->upper() }}</span>
+                @endif
+                <a class="text-orange-700 hover:underline" href="{{ route('users.show', $recipe->author) }}">By {{ $recipe->author->name }}</a>
+            </div>
             @if ($recipe->summary !== '')
                 <p class="mt-4 whitespace-pre-line text-lg text-stone-700">{{ $recipe->summary }}</p>
             @endif

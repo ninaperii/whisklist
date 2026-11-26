@@ -16,7 +16,7 @@ class HomeController extends Controller
         return view('welcome', [
             'latestRecipes' => Recipe::query()
                 ->published()
-                ->with('thumbnail')
+                ->with(['thumbnail', 'author'])
                 ->withAllergenWarnings($request->user())
                 ->orderByDesc('published_at')
                 ->orderByDesc('id')

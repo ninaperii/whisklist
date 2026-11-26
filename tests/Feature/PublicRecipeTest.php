@@ -140,7 +140,7 @@ class PublicRecipeTest extends TestCase
     #[Test]
     public function guests_can_read_published_recipes(): void
     {
-        $author = User::factory()->create(['is_profile_public' => true]);
+        $author = User::factory()->create(['name' => 'Tart Author', 'is_profile_public' => true, 'avatar_path' => 'avatars/tart-author.png']);
         $recipe = Recipe::factory()->published()->for($author, 'author')->create(['title' => 'Lemon tart']);
         $recipe->categories()->attach(Category::factory()->create(['name' => 'Desserts']));
         $recipe->dietaryTags()->attach(DietaryTag::factory()->create(['name' => 'Vegetarian']));
@@ -153,23 +153,29 @@ class PublicRecipeTest extends TestCase
         $this->get(route('recipes.show', $recipe))
             ->assertOk()
             ->assertSee('Lemon tart')
+            ->assertSee('By Tart Author')
+            ->assertSee(asset('storage/avatars/tart-author.png'), false)
             ->assertSee(route('users.show', $author), false)
             ->assertSee('Desserts')
             ->assertSee('Vegetarian')
             ->assertSeeTextInOrder(['1.25', 'cups', 'Lemon juice', 'Mix the filling', 'Bake the tart']);
+        $this->get(route('recipes.index'))->assertOk()->assertSee('By Tart Author');
     }
 
     #[Test]
-    public function a_private_profile_does_not_expose_author_details_or_hide_the_recipe(): void
+    public function published_recipes_credit_authors_with_private_profiles(): void
     {
-        $author = User::factory()->privateProfile()->create(['name' => 'Private Author']);
+        $author = User::factory()->privateProfile()->create(['name' => 'Private Author', 'avatar_path' => 'avatars/private-author.png']);
         $recipe = Recipe::factory()->published()->for($author, 'author')->create();
 
         $this->get(route('recipes.show', $recipe))
             ->assertOk()
             ->assertSee($recipe->title)
-            ->assertDontSee($author->name)
-            ->assertDontSee(route('users.show', $author), false);
+            ->assertSee('By Private Author')
+            ->assertSee(asset('storage/avatars/private-author.png'), false)
+            ->assertSee(route('users.show', $author), false);
+        $this->get(route('recipes.index'))->assertOk()->assertSee('By Private Author');
+        $this->get(route('users.show', $author))->assertOk()->assertSee('This profile is private.');
     }
 
     #[Test]

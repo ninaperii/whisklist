@@ -64,7 +64,7 @@ class PublicRecipeController extends Controller
             ]);
         }
 
-        $query = Recipe::query()->published()->with('thumbnail');
+        $query = Recipe::query()->published()->with(['thumbnail', 'author']);
         $user = $request->user();
         $query->withAllergenWarnings($user);
         $usePreferences = $user !== null && (bool) ($filters['use_preferences'] ?? false);

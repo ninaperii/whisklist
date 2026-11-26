@@ -16,14 +16,16 @@ use Illuminate\View\View;
 class ProfileController extends Controller
 {
     /**
-     * Display a user profile when its privacy rules allow access.
+     * Display public attribution and recipes, with profile details when permitted.
      */
-    public function show(User $user): View
+    public function show(Request $request, User $user): View
     {
-        Gate::authorize('view', $user);
-
         return view('profiles.show', [
             'profile' => $user,
+            'showDetails' => Gate::allows('view', $user),
+            'recipes' => $user->recipes()->published()->with(['author', 'thumbnail'])
+                ->withAllergenWarnings($request->user())
+                ->orderByDesc('published_at')->orderByDesc('id')->paginate(12),
         ]);
     }
 
