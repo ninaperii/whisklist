@@ -131,8 +131,8 @@ class PublicRecipeTest extends TestCase
         $this->get(route('home'))
             ->assertOk()
             ->assertSeeTextInOrder([$newer->title, $older->title])
-            ->assertSee(route('recipes.show', $newer), false)
-            ->assertSee(route('recipes.thumbnail', $newer), false)
+            ->assertSee('href="'.route('recipes.show', $newer, false).'"', false)
+            ->assertSee('src="'.route('recipes.thumbnail', $newer, false).'"', false)
             ->assertDontSee($draft->title)
             ->assertDontSee($future->title);
     }

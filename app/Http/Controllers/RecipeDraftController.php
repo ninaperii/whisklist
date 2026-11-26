@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\DietaryTag;
 use App\Models\Ingredient;
 use App\Models\Recipe;
+use App\View\GuestHomeCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -21,6 +22,8 @@ use Throwable;
 
 class RecipeDraftController extends Controller
 {
+    public function __construct(private GuestHomeCache $homeCache) {}
+
     public function index(Request $request): View
     {
         $draftsOnly = $request->query('status') === 'draft';
@@ -65,6 +68,7 @@ class RecipeDraftController extends Controller
             $recipe = Recipe::query()->lockForUpdate()->findOrFail($recipe->id);
             $recipe->update(['status' => RecipeStatus::Draft, 'published_at' => null]);
         });
+        rescue(fn () => $this->homeCache->warm());
 
         return to_route('recipes.mine')->with('status', 'Recipe is now private.');
     }
@@ -83,6 +87,7 @@ class RecipeDraftController extends Controller
         });
 
         Storage::disk('local')->delete($paths);
+        rescue(fn () => $this->homeCache->warm());
 
         return to_route('recipes.mine')->with('status', 'Recipe deleted.');
     }
@@ -146,6 +151,7 @@ class RecipeDraftController extends Controller
         }
 
         if ($recipe->isPublished()) {
+            rescue(fn () => $this->homeCache->warm());
             $response = to_route('recipes.show', $recipe)->with('status', $publishedNow ? 'Recipe published.' : 'Recipe updated.');
             if ($publishedNow) {
                 $response->with('published_from_editor', $editorPath);

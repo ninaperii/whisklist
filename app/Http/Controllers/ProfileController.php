@@ -7,6 +7,7 @@ use App\Models\Allergen;
 use App\Models\DietaryTag;
 use App\Models\Ingredient;
 use App\Models\User;
+use App\View\GuestHomeCache;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -91,7 +92,7 @@ class ProfileController extends Controller
     /**
      * Update the authenticated user's profile.
      */
-    public function update(UpdateProfileRequest $request): RedirectResponse
+    public function update(UpdateProfileRequest $request, GuestHomeCache $homeCache): RedirectResponse
     {
         $user = $request->user();
 
@@ -99,6 +100,9 @@ class ProfileController extends Controller
         Gate::authorize('update', $user);
 
         $user->update($request->validated());
+        if ($user->wasChanged('name') && $user->recipes()->published()->exists()) {
+            rescue(fn () => $homeCache->warm());
+        }
 
         return redirect()
             ->route('profile.edit')
