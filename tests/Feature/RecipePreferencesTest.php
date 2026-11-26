@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Allergen;
 use App\Models\DietaryTag;
 use App\Models\Ingredient;
 use App\Models\Recipe;
@@ -13,6 +14,32 @@ use Tests\TestCase;
 class RecipePreferencesTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[Test]
+    public function viewers_see_warnings_only_for_their_own_saved_allergens(): void
+    {
+        $allergen = Allergen::factory()->create(['name' => 'Wheat']);
+        $admin = User::factory()->admin()->create();
+        $this->actingAs($admin)->post(route('admin.ingredients.store'), [
+            'name' => 'Bread flour',
+            'allergens' => [$allergen->id],
+        ])->assertRedirect(route('admin.ingredients.index'));
+        $ingredient = Ingredient::query()->where('slug', 'bread-flour')->sole();
+        $recipe = Recipe::factory()->published()->create(['title' => 'Fresh bread']);
+        $recipe->ingredients()->attach($ingredient, ['position' => 1]);
+
+        $viewer = User::factory()->create();
+        $this->actingAs($viewer)->put(route('profile.recipe-preferences.update'), [
+            'allergens' => [$allergen->id],
+        ])->assertRedirect();
+
+        foreach ([route('home'), route('recipes.index'), route('recipes.show', $recipe)] as $url) {
+            $this->get($url)->assertOk()->assertSee('Allergen match: Wheat');
+        }
+        $this->actingAs($admin)->get(route('recipes.show', $recipe))->assertOk()->assertDontSee('Allergen match:');
+        auth()->logout();
+        $this->get(route('recipes.show', $recipe))->assertOk()->assertDontSee('Allergen match:');
+    }
 
     #[Test]
     public function saved_preferences_are_private_and_only_filter_when_requested(): void

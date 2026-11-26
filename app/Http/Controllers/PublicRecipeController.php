@@ -52,6 +52,7 @@ class PublicRecipeController extends Controller
         $categoryTree = Category::query()->orderBy('name')->get()->groupBy('parent_id');
         $query = Recipe::query()->published()->with('thumbnail');
         $user = $request->user();
+        $query->withAllergenWarnings($user);
         $usePreferences = $user !== null && (bool) ($filters['use_preferences'] ?? false);
         if (! $usePreferences) {
             unset($filters['use_preferences']);
@@ -135,12 +136,13 @@ class PublicRecipeController extends Controller
         return array_keys($expanded);
     }
 
-    public function show(string $recipe): View
+    public function show(Request $request, string $recipe): View
     {
         $publishedRecipe = Recipe::query()
             ->published()
             ->where('slug', $recipe)
             ->with(['author', 'categories', 'dietaryTags', 'ingredients', 'steps', 'thumbnail'])
+            ->withAllergenWarnings($request->user())
             ->firstOrFail();
 
         return view('recipes.show', ['recipe' => $publishedRecipe]);

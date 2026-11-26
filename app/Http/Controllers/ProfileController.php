@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Profile\UpdateProfileRequest;
+use App\Models\Allergen;
 use App\Models\DietaryTag;
 use App\Models\Ingredient;
 use App\Models\User;
@@ -40,8 +41,10 @@ class ProfileController extends Controller
             'user' => $user,
             'dietaryTagOptions' => DietaryTag::query()->orderBy('name')->pluck('name', 'id'),
             'ingredientOptions' => Ingredient::query()->orderBy('name')->pluck('name', 'id'),
+            'allergenOptions' => Allergen::query()->orderBy('name')->pluck('name', 'id'),
             'preferredTags' => $user->preferredDietaryTags()->allRelatedIds()->all(),
             'excludedIngredients' => $user->excludedIngredients()->allRelatedIds()->all(),
+            'selectedAllergens' => $user->allergens()->allRelatedIds()->all(),
         ]);
     }
 
@@ -55,12 +58,15 @@ class ProfileController extends Controller
             'dietary_tags.*' => ['required', 'integer', 'distinct', 'exists:dietary_tags,id'],
             'exclude_ingredients' => ['sometimes', 'array', 'max:50'],
             'exclude_ingredients.*' => ['required', 'integer', 'distinct', 'exists:ingredients,id'],
+            'allergens' => ['sometimes', 'array', 'max:50'],
+            'allergens.*' => ['required', 'integer', 'distinct', 'exists:allergens,id'],
         ]);
 
         DB::transaction(function () use ($user, $preferences): void {
             User::query()->lockForUpdate()->findOrFail($user->id);
             $user->preferredDietaryTags()->sync($preferences['dietary_tags'] ?? []);
             $user->excludedIngredients()->sync($preferences['exclude_ingredients'] ?? []);
+            $user->allergens()->sync($preferences['allergens'] ?? []);
         });
 
         return redirect(route('profile.edit').'#recipe-preferences')->with('recipe_preference_status', 'Recipe preferences saved.');

@@ -25,4 +25,9 @@ class Ingredient extends Model
     {
         return 'slug';
     }
+
+    public function allergens(): BelongsToMany
+    {
+        return $this->belongsToMany(Allergen::class);
+    }
 }

@@ -10,6 +10,10 @@
             @if ($recipe->summary !== '')
                 <p class="mt-2 line-clamp-2 text-sm text-stone-600">{{ $recipe->summary }}</p>
             @endif
+            @php($allergenMatches = $recipe->matchedAllergenNames())
+            @if ($allergenMatches->isNotEmpty())
+                <p class="mt-2 text-sm font-semibold text-amber-900">Allergen match: {{ $allergenMatches->join(', ') }}</p>
+            @endif
         </div>
     </a>
 </li>

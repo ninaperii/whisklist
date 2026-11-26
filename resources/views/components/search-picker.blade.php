@@ -5,14 +5,14 @@
         Search {{ strtolower($label) }}
         <input class="mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2" type="search" autocomplete="off" data-picker-search>
     </label>
-    <ul class="max-h-48 overflow-y-auto rounded-lg border border-stone-200" aria-label="{{ $label }}">
+    <ul class="box-content max-h-27 overflow-y-auto rounded-lg border border-stone-200" aria-label="{{ $label }}">
         @foreach ($options as $id => $name)
             <li data-picker-option="{{ $name }}">
                 <label class="block cursor-pointer">
                     <input class="peer sr-only" type="checkbox" name="{{ $field }}[]" value="{{ $id }}"
                         @if ($parents !== null) data-category-parent="{{ $parents[$id] ?? '' }}" @endif
                         @checked(in_array($id, $selected))>
-                    <span class="block border-b border-stone-100 px-3 py-2 text-sm hover:bg-stone-50 peer-checked:bg-orange-50 peer-checked:text-orange-800 peer-indeterminate:bg-stone-100 peer-focus-visible:ring-2 peer-focus-visible:ring-inset peer-focus-visible:ring-orange-700">{{ $name }}</span>
+                    <span class="block h-9 truncate border-b border-stone-100 px-3 text-sm leading-[35px] hover:bg-stone-50 peer-checked:bg-orange-50 peer-checked:text-orange-800 peer-indeterminate:bg-stone-100 peer-focus-visible:ring-2 peer-focus-visible:ring-inset peer-focus-visible:ring-orange-700" title="{{ $name }}">{{ $name }}</span>
                 </label>
             </li>
         @endforeach

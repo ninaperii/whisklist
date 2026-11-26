@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 #[Fillable(['user_id', 'title', 'slug', 'summary', 'preparation_minutes', 'cooking_minutes', 'servings', 'difficulty', 'status', 'published_at'])]
@@ -96,6 +97,30 @@ class Recipe extends Model
     public function scopeDraft(Builder $query): Builder
     {
         return $query->where('status', RecipeStatus::Draft);
+    }
+
+    public function scopeWithAllergenWarnings(Builder $query, ?User $viewer): Builder
+    {
+        $allergens = $viewer?->allergens()->allRelatedIds()->all() ?? [];
+
+        if ($allergens === []) {
+            return $query;
+        }
+
+        return $query->with(['ingredients.allergens' => fn (BelongsToMany $relation) => $relation->whereIn('allergens.id', $allergens)]);
+    }
+
+    public function matchedAllergenNames(): Collection
+    {
+        if (! $this->relationLoaded('ingredients')) {
+            return collect();
+        }
+
+        return $this->ingredients
+            ->filter(fn (Ingredient $ingredient): bool => $ingredient->relationLoaded('allergens'))
+            ->flatMap(fn (Ingredient $ingredient): Collection => $ingredient->allergens->pluck('name'))
+            ->unique()
+            ->sort();
     }
 
     public function isPublished(): bool

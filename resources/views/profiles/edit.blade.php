@@ -104,11 +104,15 @@
                 @csrf
                 @method('PUT')
                 @foreach ([
+                    'allergens' => ['My allergens', $allergenOptions, $selectedAllergens],
                     'dietary_tags' => ['Preferred dietary tags', $dietaryTagOptions, $preferredTags],
                     'exclude_ingredients' => ['Ingredients to avoid', $ingredientOptions, $excludedIngredients],
                 ] as $field => [$label, $options, $selected])
                     <fieldset>
                         <legend class="mb-2 font-semibold">{{ $label }}</legend>
+                        @if ($field === 'allergens')
+                            <p class="mb-2 text-sm text-stone-600">Show warnings for known matches when you browse recipes.</p>
+                        @endif
                         @if ($options->isEmpty())
                             <p class="text-sm text-stone-600">No options available yet.</p>
                         @else

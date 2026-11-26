@@ -16,6 +16,8 @@ class StoreIngredientRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'allergens' => ['sometimes', 'array', 'max:50'],
+            'allergens.*' => ['required', 'integer', 'distinct', 'exists:allergens,id'],
             'name' => ['required', 'string', 'max:255', Rule::unique(Ingredient::class)],
         ];
     }

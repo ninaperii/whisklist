@@ -28,6 +28,14 @@
             @endif
         </header>
 
+        @php($allergenMatches = $recipe->matchedAllergenNames())
+        @if ($allergenMatches->isNotEmpty())
+            <aside class="mt-6 rounded-lg bg-amber-50 p-4 text-amber-950">
+                <p class="font-semibold">Allergen match: {{ $allergenMatches->join(', ') }}</p>
+                <p class="mt-1 text-sm">This warning uses the recorded ingredients and known allergen links.</p>
+            </aside>
+        @endif
+
         @if ($recipe->thumbnail)
             <img class="mt-6 max-h-96 w-full rounded-2xl object-cover" src="{{ route('recipes.thumbnail', $recipe) }}" alt="{{ $recipe->thumbnail->alt_text ?? $recipe->title }}">
         @endif

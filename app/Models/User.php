@@ -57,4 +57,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Ingredient::class, 'excluded_ingredient_user');
     }
+
+    public function allergens(): BelongsToMany
+    {
+        return $this->belongsToMany(Allergen::class);
+    }
 }
