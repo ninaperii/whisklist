@@ -12,10 +12,26 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class ProfileController extends Controller
 {
+    public function avatar(User $user): StreamedResponse
+    {
+        $path = $user->avatar_path;
+        $storage = Storage::disk('local');
+        abort_unless($path && str_starts_with($path, 'avatars/') && $storage->exists($path), 404);
+
+        return $storage->response($path, null, [
+            'Cache-Control' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     /**
      * Display public attribution and recipes, with profile details when permitted.
      */
@@ -99,7 +115,34 @@ class ProfileController extends Controller
         abort_unless($user instanceof User, 403);
         Gate::authorize('update', $user);
 
-        $user->update($request->validated());
+        $data = $request->safe()->except(['avatar']);
+        $avatar = $request->file('avatar');
+        if ($avatar) {
+            $path = $avatar->store('avatars', 'local');
+            if ($path === false) {
+                throw ValidationException::withMessages(['avatar' => 'The photo could not be saved. Try uploading it again.']);
+            }
+
+            $data['avatar_path'] = $path;
+            try {
+                [$user, $previous] = DB::transaction(function () use ($user, $data): array {
+                    $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
+                    $previous = $lockedUser->avatar_path;
+                    $lockedUser->update($data);
+
+                    return [$lockedUser, $previous];
+                });
+            } catch (Throwable $exception) {
+                Storage::disk('local')->delete($path);
+                throw $exception;
+            }
+
+            if ($previous && str_starts_with($previous, 'avatars/') && $previous !== $path) {
+                Storage::disk('local')->delete($previous);
+            }
+        } else {
+            $user->update($data);
+        }
         if ($user->wasChanged('name') && $user->recipes()->published()->exists()) {
             rescue(fn () => $homeCache->warm());
         }

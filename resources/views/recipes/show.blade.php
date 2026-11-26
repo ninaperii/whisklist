@@ -18,7 +18,7 @@
             <h1 class="text-4xl font-semibold tracking-tight">{{ $recipe->title }}</h1>
             <div class="mt-3 flex items-center gap-3 text-sm font-semibold text-stone-700">
                 @if ($recipe->author->avatar_path)
-                    <img class="size-10 shrink-0 rounded-full object-cover" src="{{ asset('storage/'.$recipe->author->avatar_path) }}" alt="">
+                    <img class="size-10 shrink-0 rounded-full object-cover" src="{{ route('users.avatar', $recipe->author) }}" alt="">
                 @else
                     <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-orange-100 text-orange-800" aria-hidden="true">{{ str($recipe->author->name)->substr(0, 1)->upper() }}</span>
                 @endif

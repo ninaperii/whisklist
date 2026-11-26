@@ -20,7 +20,7 @@
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <a class="inline-flex items-center gap-2 font-semibold text-orange-700 hover:underline" href="{{ route('users.show', $comment->author) }}">
                         @if ($comment->author->avatar_path)
-                            <img class="size-8 shrink-0 rounded-full object-cover" src="{{ asset('storage/'.$comment->author->avatar_path) }}" alt="" loading="lazy">
+                            <img class="size-8 shrink-0 rounded-full object-cover" src="{{ route('users.avatar', $comment->author) }}" alt="" loading="lazy">
                         @else
                             <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm text-orange-800" aria-hidden="true">{{ str($comment->author->name)->substr(0, 1)->upper() }}</span>
                         @endif

@@ -17,9 +17,23 @@
                 </p>
             @endif
 
-            <form class="mt-8 space-y-6" method="POST" action="{{ route('profile.update') }}" data-profile-editor @if ($errors->getBag('default')->any()) data-unsaved-input @endif>
+            <form class="mt-8 space-y-6" method="POST" enctype="multipart/form-data" action="{{ route('profile.update') }}" data-profile-editor @if ($errors->getBag('default')->any()) data-unsaved-input @endif>
                 @csrf
                 @method('PUT')
+
+                <div class="space-y-2" data-thumbnail-picker>
+                    <label class="block font-semibold" for="profile-avatar">Profile photo</label>
+                    <div @if (! $user->avatar_path) hidden @endif data-thumbnail-preview>
+                        <img class="size-20 rounded-full object-cover" @if ($user->avatar_path) src="{{ route('users.avatar', $user) }}" @endif alt="Profile photo preview">
+                    </div>
+                    <input class="block w-full rounded-lg border border-stone-300 px-3 py-2" id="profile-avatar" name="avatar" type="file"
+                        accept="image/jpeg,image/png,image/webp" aria-describedby="profile-avatar-help profile-avatar-status">
+                    <p class="text-sm text-stone-600" id="profile-avatar-help">JPEG, PNG, or WebP, up to 2 MB. Your photo is visible even if your profile is private.</p>
+                    <p class="sr-only" id="profile-avatar-status" role="status"></p>
+                    @error('avatar')
+                        <p class="text-sm text-red-700" role="alert">{{ $message }}</p>
+                    @enderror
+                </div>
 
                 <div>
                     <label class="block text-sm font-medium" for="name">Name</label>

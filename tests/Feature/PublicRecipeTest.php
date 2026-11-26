@@ -174,7 +174,7 @@ class PublicRecipeTest extends TestCase
             ->assertOk()
             ->assertSee('Lemon tart')
             ->assertSee('By Tart Author')
-            ->assertSee(asset('storage/avatars/tart-author.png'), false)
+            ->assertSee(route('users.avatar', $author), false)
             ->assertSee(route('users.show', $author), false)
             ->assertSee('Desserts')
             ->assertSee('Vegetarian')
@@ -192,7 +192,7 @@ class PublicRecipeTest extends TestCase
             ->assertOk()
             ->assertSee($recipe->title)
             ->assertSee('By Private Author')
-            ->assertSee(asset('storage/avatars/private-author.png'), false)
+            ->assertSee(route('users.avatar', $author), false)
             ->assertSee(route('users.show', $author), false);
         $this->get(route('recipes.index'))->assertOk()->assertSee('By Private Author');
         $this->get(route('users.show', $author))->assertOk()->assertSee('This profile is private.');

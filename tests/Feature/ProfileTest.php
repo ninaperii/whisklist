@@ -6,6 +6,8 @@ use App\Enums\UserRole;
 use App\Models\Recipe;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -50,11 +52,40 @@ class ProfileTest extends TestCase
             ->get(route('users.show', $privateUser))
             ->assertOk()
             ->assertSee($privateUser->name)
-            ->assertSee(asset('storage/avatars/cook.png'), false)
+            ->assertSee(route('users.avatar', $privateUser), false)
             ->assertSee('This profile is private.')
             ->assertSee($published->title)
             ->assertDontSee($draft->title)
             ->assertDontSee('Hidden biography');
+    }
+
+    #[Test]
+    public function users_can_upload_and_replace_a_public_profile_photo(): void
+    {
+        $storage = Storage::fake('local');
+        $user = User::factory()->privateProfile()->create();
+        $other = User::factory()->create();
+        $data = ['name' => $user->name, 'is_profile_public' => false];
+
+        $this->get(route('users.avatar', $user))->assertNotFound();
+        $this->actingAs($user)->put(route('profile.update'), $data + [
+            'avatar' => UploadedFile::fake()->image('first.png'), 'user_id' => $other->id,
+        ])->assertRedirect(route('profile.edit'));
+        $first = $user->fresh()->avatar_path;
+        $storage->assertExists($first);
+        $this->assertNull($other->fresh()->avatar_path);
+
+        $this->put(route('profile.update'), $data + ['avatar' => UploadedFile::fake()->create('bad.pdf')])
+            ->assertSessionHasErrors('avatar');
+        $this->assertSame($first, $user->fresh()->avatar_path);
+        $this->put(route('profile.update'), $data + ['avatar' => UploadedFile::fake()->image('second.png')])
+            ->assertRedirect(route('profile.edit'));
+        $storage->assertMissing($first);
+        $storage->assertExists($user->fresh()->avatar_path);
+
+        auth()->logout();
+        $this->get(route('users.avatar', $user))->assertOk()->assertHeader('Content-Type', 'image/png');
+        $this->get(route('users.show', $user))->assertOk()->assertSee(route('users.avatar', $user), false);
     }
 
     #[Test]

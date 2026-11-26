@@ -8,7 +8,7 @@
             <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
                 <div class="flex items-center gap-4">
                     @if ($profile->avatar_path)
-                        <img class="size-16 shrink-0 rounded-full object-cover" src="{{ asset('storage/'.$profile->avatar_path) }}" alt="">
+                        <img class="size-16 shrink-0 rounded-full object-cover" src="{{ route('users.avatar', $profile) }}" alt="">
                     @else
                         <div class="flex size-16 shrink-0 items-center justify-center rounded-full bg-orange-100 text-2xl font-semibold text-orange-800" aria-hidden="true">
                             {{ str($profile->name)->substr(0, 1)->upper() }}

@@ -76,7 +76,7 @@ if (thumbnailPicker) {
             previewUrl = URL.createObjectURL(file);
             image.src = previewUrl;
             preview.hidden = false;
-            status.textContent = `${file.name} selected. Save the recipe to keep this thumbnail.`;
+            status.textContent = `${file.name} selected. Save your changes to keep this picture.`;
         } else {
             if (savedSource) {
                 image.src = savedSource;

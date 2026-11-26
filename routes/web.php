@@ -40,6 +40,7 @@ Route::get('/dashboard', DashboardController::class)
 
 Route::get('/users/{user}', [ProfileController::class, 'show'])
     ->name('users.show');
+Route::get('/users/{user}/avatar', [ProfileController::class, 'avatar'])->name('users.avatar');
 
 Route::middleware('auth')->group(function () {
     Route::resource('recipes', RecipeDraftController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
