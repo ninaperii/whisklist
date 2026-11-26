@@ -26,7 +26,9 @@ for (const picker of document.querySelectorAll('[data-search-picker]')) {
                 continue;
             }
             const chip = template.content.firstElementChild.cloneNode(true);
-            chip.querySelector('[data-picker-chip-label]').textContent = name;
+            chip.querySelector('[data-picker-chip-label]').textContent = checkbox.hasAttribute('data-automatic-filter')
+                ? `${name} (from preferences)`
+                : name;
             chip.setAttribute('aria-label', `Remove ${name}`);
             chip.addEventListener('click', () => {
                 checkbox.click();
@@ -124,6 +126,22 @@ for (const form of document.querySelectorAll('[data-confirm-delete]')) {
 
 const recipeFilters = document.querySelector('[data-recipe-filters]');
 if (recipeFilters) {
+    const sidebarToggle = document.querySelector('[data-toggle-filter-sidebar]');
+    const filterLayout = recipeFilters.closest('[data-filter-layout]');
+    if (sidebarToggle && filterLayout) {
+        sidebarToggle.hidden = false;
+        sidebarToggle.addEventListener('click', () => {
+            const collapsed = filterLayout.toggleAttribute('data-filters-collapsed');
+            sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+            sidebarToggle.textContent = collapsed ? 'Show filters →' : '← Hide filters';
+        });
+    }
+
+    const panel = recipeFilters.querySelector('[data-filter-panel]');
+    if (panel && window.matchMedia('(max-width: 1023px)').matches) {
+        panel.open = false;
+    }
+
     const included = 'categories[]';
     const excluded = 'exclude_categories[]';
     const categoryInputs = new Map([[included, new Map()], [excluded, new Map()]]);
@@ -140,7 +158,22 @@ if (recipeFilters) {
         }
     }
 
+    const hasExcludedParent = (id) => {
+        let parent = categoryInputs.get(included).get(id).dataset.categoryParent;
+        while (parent) {
+            const ancestor = categoryInputs.get(excluded).get(parent);
+            if (ancestor.checked) {
+                return true;
+            }
+            parent = ancestor.dataset.categoryParent;
+        }
+        return false;
+    };
+
     const refreshParentStates = () => {
+        for (const checkbox of categoryInputs.get(included).values()) {
+            checkbox.disabled = hasExcludedParent(checkbox.value);
+        }
         for (const checkboxes of categoryInputs.values()) {
             // The form lists parents before children, so read child states first.
             for (const checkbox of [...checkboxes.values()].reverse()) {
@@ -175,6 +208,10 @@ if (recipeFilters) {
 
         while (pending.length) {
             const id = pending.pop();
+            if (checked && checkbox.name === included && id !== checkbox.value
+                && (opposite.get(id).checked || hasExcludedParent(id))) {
+                continue;
+            }
             current.get(id).checked = checked;
             if (checked) {
                 opposite.get(id).checked = false;
@@ -187,6 +224,64 @@ if (recipeFilters) {
     });
 
     refreshParentStates();
+
+    const preferencesToggle = recipeFilters.querySelector('[name="use_preferences"]');
+    if (preferencesToggle) {
+        const saved = [...recipeFilters.querySelectorAll('[data-saved-filter]')];
+        const manual = new Set(saved.filter((input) => input.checked && !input.hasAttribute('data-automatic-filter')));
+
+        preferencesToggle.addEventListener('change', () => {
+            for (const input of saved) {
+                const conflictingInclude = input.dataset.savedFilter === 'exclude_ingredients'
+                    && recipeFilters.querySelector(`input[name="ingredients[]"][value="${CSS.escape(input.value)}"]:checked`);
+                const automatic = preferencesToggle.checked && !manual.has(input) && !conflictingInclude;
+                input.toggleAttribute('data-automatic-filter', automatic);
+                input.checked = automatic || manual.has(input);
+                if (automatic) {
+                    input.closest('details').open = true;
+                }
+            }
+            for (const input of saved) {
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+
+        recipeFilters.addEventListener('change', (event) => {
+            const input = event.target;
+            for (const option of manual) {
+                if (!option.checked) {
+                    manual.delete(option);
+                }
+            }
+            if (!input.hasAttribute('data-saved-filter') || !input.checked) {
+                return;
+            }
+            if (preferencesToggle.checked && !manual.has(input)) {
+                input.setAttribute('data-automatic-filter', '');
+            } else if (!preferencesToggle.checked) {
+                manual.add(input);
+            }
+        });
+
+        recipeFilters.addEventListener('formdata', ({ formData }) => {
+            if (!preferencesToggle.checked) {
+                return;
+            }
+            for (const field of ['dietary_tags', 'exclude_ingredients']) {
+                const name = `${field}[]`;
+                const preferences = saved.filter((input) => input.dataset.savedFilter === field);
+                const automatic = preferences.filter((input) => input.hasAttribute('data-automatic-filter')).map((input) => input.value);
+                const values = formData.getAll(name);
+                formData.delete(name);
+                for (const value of values.filter((value) => !automatic.includes(value))) {
+                    formData.append(name, value);
+                }
+                for (const input of preferences.filter((input) => !input.checked)) {
+                    formData.append(`skip_${name}`, input.value);
+                }
+            }
+        });
+    }
 }
 
 for (const list of document.querySelectorAll('[data-draft-list]')) {

@@ -16,6 +16,24 @@ class RecipePreferencesTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
+    public function saving_preferences_can_return_to_the_previous_recipe_search(): void
+    {
+        $user = User::factory()->create();
+        $filters = ['q' => 'pancakes', 'use_preferences' => 1, 'page' => 2];
+        $returnSearch = '?'.http_build_query($filters);
+
+        $this->actingAs($user)
+            ->get(route('profile.edit', ['return_search' => $returnSearch]))
+            ->assertOk()
+            ->assertSee('Back to Recipes')
+            ->assertSee(route('recipes.index', $filters));
+
+        $this->put(route('profile.recipe-preferences.update'), ['return_search' => $returnSearch])
+            ->assertRedirect(route('recipes.index', $filters))
+            ->assertSessionHas('recipe_preference_status');
+    }
+
+    #[Test]
     public function viewers_see_warnings_only_for_their_own_saved_allergens(): void
     {
         $allergen = Allergen::factory()->create(['name' => 'Wheat']);
@@ -65,7 +83,11 @@ class RecipePreferencesTest extends TestCase
 
         $this->get(route('recipes.index'))->assertOk()->assertSee($excluded->title);
         $this->get($filterUrl)->assertOk()->assertSee($matching->title)
+            ->assertSee('Vegan (from preferences)')
             ->assertDontSee($excluded->title)->assertDontSee($untagged->title);
+        $this->get(route('recipes.index', ['use_preferences' => 1, 'skip_exclude_ingredients' => [$ingredient->id]]))
+            ->assertOk()->assertSee($excluded->title)->assertDontSee($untagged->title);
+        $this->assertTrue($user->excludedIngredients()->whereKey($ingredient->id)->exists());
 
         $this->actingAs(User::factory()->create())->get($filterUrl)->assertOk()->assertSee($excluded->title);
         $this->get(route('users.show', $user))->assertOk()->assertDontSee($tag->name)->assertDontSee($ingredient->name);

@@ -86,6 +86,9 @@
         </div>
 
         <section id="recipe-preferences" class="mt-8 space-y-4 rounded-2xl bg-white p-6 ring-1 ring-stone-200">
+            @if ($returnToRecipes)
+                <a class="inline-block text-sm font-semibold text-orange-700 hover:underline" href="{{ $returnToRecipes }}">← Back to Recipes</a>
+            @endif
             <h2 class="text-xl font-semibold">Recipe preferences</h2>
             <p class="text-sm text-stone-600">These choices are private. Apply them using <a class="font-semibold text-orange-700 underline" href="{{ route('recipes.index') }}">Use my preferences</a> on the Recipes page.</p>
 
@@ -103,6 +106,9 @@
             <form class="space-y-5" method="POST" action="{{ route('profile.recipe-preferences.update') }}" data-profile-editor @if ($errors->recipePreferences->any()) data-unsaved-input @endif>
                 @csrf
                 @method('PUT')
+                @if ($returnToRecipes)
+                    <input type="hidden" name="return_search" value="{{ $returnSearch }}">
+                @endif
                 @foreach ([
                     'allergens' => ['My allergens', $allergenOptions, $selectedAllergens],
                     'dietary_tags' => ['Preferred dietary tags', $dietaryTagOptions, $preferredTags],
@@ -122,7 +128,7 @@
                 @endforeach
                 <div class="flex flex-wrap gap-3">
                     <button class="rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white hover:bg-orange-800" type="submit">Save preferences</button>
-                    <a class="rounded-lg border border-stone-300 px-5 py-2.5 font-semibold hover:bg-stone-50" href="{{ route('users.show', $user) }}">Discard changes</a>
+                    <a class="rounded-lg border border-stone-300 px-5 py-2.5 font-semibold hover:bg-stone-50" href="{{ $returnToRecipes ?? route('users.show', $user) }}">Discard changes</a>
                 </div>
             </form>
         </section>

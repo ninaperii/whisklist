@@ -17,6 +17,34 @@ class PublicRecipeTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
+    public function removing_a_category_chip_clears_its_branch_only(): void
+    {
+        $desserts = Category::factory()->create(['name' => 'Desserts']);
+        $pies = Category::factory()->for($desserts, 'parent')->create(['name' => 'Pies']);
+        $fruitPies = Category::factory()->for($pies, 'parent')->create(['name' => 'Fruit pies']);
+        $other = Category::factory()->create(['name' => 'Other']);
+
+        foreach (['categories', 'exclude_categories'] as $filter) {
+            $this->get(route('recipes.index', ['q' => 'apple', $filter => [$desserts->id, $pies->id, $fruitPies->id, $other->id]]))
+                ->assertOk()
+                ->assertSee('href="'.e(route('recipes.index', ['q' => 'apple', $filter => [$other->id]])).'"', false);
+        }
+    }
+
+    #[Test]
+    public function quick_filters_use_difficulty_and_total_time(): void
+    {
+        $details = ['difficulty' => 'easy', 'preparation_minutes' => 8, 'cooking_minutes' => 12];
+        Recipe::factory()->published()->create(['title' => 'Quick pancakes'] + $details);
+        Recipe::factory()->published()->create(['title' => 'Slow pancakes', 'cooking_minutes' => 13] + $details);
+        Recipe::factory()->published()->create(['title' => 'Hard pancakes', 'difficulty' => 'hard'] + $details);
+        $this->get(route('recipes.index', [
+            'difficulty' => ['easy', 'medium'], 'max_time' => 20,
+        ]))->assertOk()->assertSee('Quick pancakes')
+            ->assertDontSee('Slow pancakes')->assertDontSee('Hard pancakes');
+    }
+
+    #[Test]
     public function visitors_can_combine_search_and_filters_and_exclude_nested_category_branches(): void
     {
         $dessert = Category::factory()->create(['name' => 'Desserts']);
@@ -44,14 +72,19 @@ class PublicRecipeTest extends TestCase
             'q' => 'LEMON',
             'categories' => [$dessert->id],
             'ingredients' => [$lemon->id, $sugar->id],
+            'require_all_ingredients' => 1,
             'dietary_tags' => [$glutenFree->id, $vegetarian->id],
         ];
 
         $this->get(route('recipes.index', $filters))->assertOk()
             ->assertSee($cake->title)->assertSee($pie->title)->assertDontSee($plain->title);
+        $this->get(route('recipes.index', ['ingredients' => [$lemon->id, $sugar->id]]))->assertOk()
+            ->assertSee($cake->title)->assertSee($plain->title);
         $this->get(route('recipes.index', $filters + ['exclude_categories' => [$pies->id]]))->assertOk()
             ->assertSee($cake->title)->assertDontSee($pie->title);
         $this->get(route('recipes.index', $filters + ['exclude_categories' => [$dessert->id]]))
+            ->assertRedirect(route('recipes.index'))->assertSessionHasErrors('category_conflict');
+        $this->get(route('recipes.index', ['categories' => [$fruitPies->id], 'exclude_categories' => [$dessert->id]]))
             ->assertRedirect(route('recipes.index'))->assertSessionHasErrors('category_conflict');
         $this->get(route('recipes.index', ['q' => 'Lemon', 'ingredients' => [$lemon->id], 'exclude_ingredients' => [$sugar->id]]))
             ->assertOk()->assertSee($plain->title)->assertDontSee($cake->title)->assertDontSee($pie->title);

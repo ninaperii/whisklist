@@ -45,6 +45,8 @@ class ProfileController extends Controller
             'preferredTags' => $user->preferredDietaryTags()->allRelatedIds()->all(),
             'excludedIngredients' => $user->excludedIngredients()->allRelatedIds()->all(),
             'selectedAllergens' => $user->allergens()->allRelatedIds()->all(),
+            'returnSearch' => $request->query('return_search'),
+            'returnToRecipes' => $this->recipeSearchUrl($request->query('return_search')),
         ]);
     }
 
@@ -69,7 +71,19 @@ class ProfileController extends Controller
             $user->allergens()->sync($preferences['allergens'] ?? []);
         });
 
-        return redirect(route('profile.edit').'#recipe-preferences')->with('recipe_preference_status', 'Recipe preferences saved.');
+        return redirect($this->recipeSearchUrl($request->input('return_search')) ?? route('profile.edit').'#recipe-preferences')
+            ->with('recipe_preference_status', 'Recipe preferences saved.');
+    }
+
+    private function recipeSearchUrl(mixed $search): ?string
+    {
+        if (! is_string($search) || ! str_starts_with($search, '?') || strlen($search) > 16384) {
+            return null;
+        }
+
+        parse_str(substr($search, 1), $filters);
+
+        return route('recipes.index', $filters);
     }
 
     /**
