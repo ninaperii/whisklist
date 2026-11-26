@@ -13,6 +13,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicRecipeController;
 use App\Http\Controllers\RecipeDraftController;
 use App\Http\Controllers\RecipeThumbnailController;
+use App\Http\Controllers\WhiskListController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('home');
@@ -43,6 +44,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('recipes', RecipeDraftController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
     Route::patch('/recipes/{recipe}/unpublish', [RecipeDraftController::class, 'unpublish'])->name('recipes.unpublish');
     Route::get('/my-recipes', [RecipeDraftController::class, 'index'])->name('recipes.mine');
+    Route::get('/whisklist', [WhiskListController::class, 'index'])->name('whisklist.index');
+    Route::post('/whisklist/{recipe}', [WhiskListController::class, 'store'])->name('whisklist.store');
+    Route::delete('/whisklist/{recipe}', [WhiskListController::class, 'destroy'])->name('whisklist.destroy');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/recipe-preferences', [ProfileController::class, 'updateRecipePreferences'])->name('profile.recipe-preferences.update');

@@ -53,6 +53,11 @@ class Recipe extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function savedBy(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'recipe_saves');
+    }
+
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class)->withTimestamps();

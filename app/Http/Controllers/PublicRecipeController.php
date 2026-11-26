@@ -66,6 +66,9 @@ class PublicRecipeController extends Controller
 
         $query = Recipe::query()->published()->with(['thumbnail', 'author']);
         $user = $request->user();
+        if ($user !== null) {
+            $query->withExists(['savedBy as is_saved' => fn (Builder $savedBy): Builder => $savedBy->whereKey($user->id)]);
+        }
         $query->withAllergenWarnings($user);
         $usePreferences = $user !== null && (bool) ($filters['use_preferences'] ?? false);
         if (! $usePreferences) {
@@ -189,6 +192,9 @@ class PublicRecipeController extends Controller
             ->withAllergenWarnings($request->user())
             ->firstOrFail();
 
-        return view('recipes.show', ['recipe' => $publishedRecipe]);
+        return view('recipes.show', [
+            'recipe' => $publishedRecipe,
+            'isSaved' => $request->user()?->savedRecipes()->wherePivot('recipe_id', $publishedRecipe->id)->exists() ?? false,
+        ]);
     }
 }

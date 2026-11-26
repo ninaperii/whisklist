@@ -328,6 +328,48 @@ for (const list of document.querySelectorAll('[data-draft-list]')) {
 }
 
 const recipeResults = document.querySelector('[data-recipe-results]');
+recipeResults?.addEventListener('submit', async (event) => {
+    const form = event.target;
+    if (!form.matches('[data-recipe-heart]')) {
+        return;
+    }
+    event.preventDefault();
+    const button = form.querySelector('button');
+    if (button.disabled) {
+        return;
+    }
+
+    const status = form.querySelector('[data-heart-status]');
+    const request = new FormData(form);
+    button.disabled = true;
+    status.hidden = true;
+
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+            body: request,
+        });
+        if (!response.ok) {
+            throw new Error('Could not update saved recipe');
+        }
+        const { saved, message } = await response.json();
+        form.elements.namedItem('_method').disabled = !saved;
+        const label = saved ? form.dataset.removeLabel : form.dataset.saveLabel;
+        button.setAttribute('aria-label', label);
+        button.title = label;
+        button.querySelector('svg').setAttribute('fill', saved ? 'currentColor' : 'none');
+        status.textContent = message;
+        status.classList.add('sr-only');
+    } catch {
+        status.textContent = 'Couldn’t update your WhiskList. Try again.';
+        status.classList.remove('sr-only');
+    } finally {
+        status.hidden = false;
+        button.disabled = false;
+    }
+});
+
 if (recipeFilters && recipeResults) {
     const status = document.querySelector('[data-recipe-search-status]');
     const searchError = document.querySelector('[data-recipe-search-error]');

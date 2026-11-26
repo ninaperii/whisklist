@@ -38,8 +38,8 @@
             <section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200">
                 <p class="text-sm font-semibold text-orange-700">Saved favorites</p>
                 <h2 class="mt-2 text-xl font-semibold">My WhiskList</h2>
-                <p class="mt-3 text-sm leading-6 text-stone-600">Recipes you save for later will be available here.</p>
-                <p class="mt-6 text-3xl font-semibold">0</p>
+                <p class="mt-6 text-3xl font-semibold">{{ $savedCount }}</p>
+                <a class="mt-3 inline-block font-semibold text-orange-700 hover:underline" href="{{ route('whisklist.index') }}">View saved recipes</a>
             </section>
         </div>
 

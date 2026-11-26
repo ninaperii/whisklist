@@ -21,6 +21,9 @@
     @endphp
     <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <h1 class="mb-6 text-3xl font-semibold tracking-tight">Recipes</h1>
+        @if (session('status'))
+            <p class="mb-5 rounded-lg bg-green-50 p-4 text-green-800" role="status">{{ session('status') }}</p>
+        @endif
         @if (session('recipe_preference_status'))
             <p class="mb-5 rounded-lg bg-green-50 p-4 text-green-800" role="status">{{ session('recipe_preference_status') }}</p>
         @endif
@@ -183,7 +186,24 @@
                 @else
                     <ul class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                         @foreach ($recipes as $recipe)
-                            <x-recipe-card :recipe="$recipe" heading="h2" />
+                            <x-recipe-card :recipe="$recipe" heading="h2">
+                                @auth
+                                    <form class="flex flex-wrap items-center justify-end gap-2 px-4 pb-3" method="POST" action="{{ route($recipe->is_saved ? 'whisklist.destroy' : 'whisklist.store', $recipe) }}" data-recipe-heart
+                                        data-save-label="Save {{ $recipe->title }} to My WhiskList" data-remove-label="Remove {{ $recipe->title }} from My WhiskList">
+                                        @csrf
+                                        <input type="hidden" name="_method" value="DELETE" @disabled(! $recipe->is_saved)>
+                                        <input type="hidden" name="from" value="recipes">
+                                        <input type="hidden" name="return_search" value="{{ http_build_query($filters + ($recipes->currentPage() > 1 ? ['page' => $recipes->currentPage()] : [])) }}">
+                                        @php($saveLabel = $recipe->is_saved ? 'Remove '.$recipe->title.' from My WhiskList' : 'Save '.$recipe->title.' to My WhiskList')
+                                        <button class="inline-flex size-10 items-center justify-center rounded-full border border-stone-300 bg-white text-orange-700 hover:bg-orange-50" type="submit" aria-label="{{ $saveLabel }}" title="{{ $saveLabel }}">
+                                            <svg aria-hidden="true" class="size-5" viewBox="0 0 24 24" fill="{{ $recipe->is_saved ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0l-1 1-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/>
+                                            </svg>
+                                        </button>
+                                        <p class="w-full text-right text-sm text-stone-600" role="status" hidden data-heart-status></p>
+                                    </form>
+                                @endauth
+                            </x-recipe-card>
                         @endforeach
                     </ul>
                     <div class="mt-8">{{ $recipes->links() }}</div>

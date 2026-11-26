@@ -17,4 +17,5 @@
             @endif
         </div>
     </a>
+    {{ $slot }}
 </li>

@@ -33,6 +33,18 @@
             @endif
         </header>
 
+        @auth
+            <form class="mt-5" method="POST" action="{{ route($isSaved ? 'whisklist.destroy' : 'whisklist.store', $recipe) }}">
+                @csrf
+                @if ($isSaved)
+                    @method('DELETE')
+                @endif
+                <button class="rounded-lg border border-stone-300 bg-white px-4 py-2 font-semibold text-orange-700 hover:bg-orange-50" type="submit">
+                    {{ $isSaved ? 'Remove from My WhiskList' : 'Save to My WhiskList' }}
+                </button>
+            </form>
+        @endauth
+
         @php($allergenMatches = $recipe->matchedAllergenNames())
         @if ($allergenMatches->isNotEmpty())
             <aside class="mt-6 rounded-lg bg-amber-50 p-4 text-amber-950">

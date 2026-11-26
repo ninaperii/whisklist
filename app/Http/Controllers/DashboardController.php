@@ -21,6 +21,7 @@ class DashboardController extends Controller
             'user' => $user,
             'draftCount' => $user->recipes()->draft()->count(),
             'publishedCount' => $user->recipes()->published()->count(),
+            'savedCount' => $user->savedRecipes()->published()->count(),
             'profileVisibility' => $user->is_profile_public ? 'Public' : 'Private',
         ]);
     }
