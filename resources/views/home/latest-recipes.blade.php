@@ -8,7 +8,7 @@
     @else
         <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($latestRecipes as $recipe)
-                <x-recipe-card :recipe="$recipe" :relative-links="$relativeLinks ?? false" />
+                <x-recipe-card :recipe="$recipe" :relative-links="$relativeLinks ?? false" origin="home" />
             @endforeach
         </ul>
     @endif

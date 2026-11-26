@@ -5,7 +5,7 @@
     @endif
 
     @auth
-        <form class="mb-6 space-y-3 rounded-2xl bg-white p-5 ring-1 ring-stone-200" method="POST" action="{{ route('recipes.comments.store', $recipe) }}">
+        <form class="mb-6 space-y-3 rounded-2xl bg-white p-5 ring-1 ring-stone-200" method="POST" action="{{ route('recipes.comments.store', ['recipe' => $recipe] + $recipeOrigin['parameters']) }}">
             @csrf
             @include('recipes.comments.field', ['commentBody' => ''])
             <button class="rounded-lg bg-orange-700 px-4 py-2 font-semibold text-white" type="submit">Post comment</button>
@@ -31,8 +31,8 @@
                 <p class="mt-2 whitespace-pre-wrap break-words text-stone-700">{{ $comment->body }}</p>
                 @can('update', $comment)
                     <div class="mt-3 flex items-center gap-4 text-sm font-semibold">
-                        <a class="text-orange-700 hover:underline" href="{{ route('recipes.comments.edit', [$recipe, $comment]) }}">Edit</a>
-                        <form method="POST" action="{{ route('recipes.comments.destroy', [$recipe, $comment]) }}" data-confirm-delete="Delete this comment permanently?">
+                        <a class="text-orange-700 hover:underline" href="{{ route('recipes.comments.edit', ['recipe' => $recipe, 'comment' => $comment] + $recipeOrigin['parameters']) }}">Edit</a>
+                        <form method="POST" action="{{ route('recipes.comments.destroy', ['recipe' => $recipe, 'comment' => $comment] + $recipeOrigin['parameters']) }}" data-confirm-delete="Delete this comment permanently?">
                             @csrf
                             @method('DELETE')
                             <button class="text-red-700 hover:underline" type="submit">Delete</button>

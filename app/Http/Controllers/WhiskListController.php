@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Recipe;
+use App\View\RecipeNavigation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -66,6 +67,6 @@ class WhiskListController extends Controller
             return to_route('whisklist.index')->with('status', $status);
         }
 
-        return to_route('recipes.show', $recipe)->with('status', $status);
+        return to_route('recipes.show', ['recipe' => $recipe] + RecipeNavigation::origin($request, $recipe)['parameters'])->with('status', $status);
     }
 }

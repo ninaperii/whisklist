@@ -25,7 +25,7 @@
                     </div>
                     <div class="flex flex-wrap items-center gap-4 text-sm font-semibold">
                         @if ($recipe->isPublished())
-                            <a class="text-orange-700 hover:underline" href="{{ route('recipes.show', $recipe) }}">View public page</a>
+                            <a class="text-orange-700 hover:underline" href="{{ route('recipes.show', ['recipe' => $recipe, 'origin' => 'mine', 'origin_query' => request()->only('page', 'status')]) }}">View public page</a>
                         @endif
                         <a class="text-orange-700 hover:underline" href="{{ route('recipes.edit', $recipe) }}">Edit</a>
                         @if ($recipe->status === \App\Enums\RecipeStatus::Published)

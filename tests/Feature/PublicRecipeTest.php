@@ -17,6 +17,26 @@ class PublicRecipeTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
+    public function an_owned_recipe_links_back_to_the_search_that_opened_it(): void
+    {
+        $author = User::factory()->create();
+        $recipe = Recipe::factory()->published()->for($author, 'author')->create(['title' => 'Apple pancakes']);
+        $filters = ['q' => 'apple', 'difficulty' => [$recipe->difficulty->value]];
+        $searchUrl = route('recipes.index', $filters);
+        $recipeUrl = route('recipes.show', ['recipe' => $recipe, 'origin' => 'recipes', 'origin_query' => $filters]);
+
+        $this->actingAs($author)->get($searchUrl)->assertOk()->assertSee('href="'.e($recipeUrl).'"', false);
+        $this->get($recipeUrl)->assertOk()->assertSee('← All recipes')->assertSee('href="'.e($searchUrl).'"', false);
+        $this->get(route('recipes.show', [
+            'recipe' => $recipe, 'origin' => 'recipes', 'origin_query' => $filters + ['page' => 2],
+        ]))->assertOk()->assertSee('href="'.e(route('recipes.index', $filters + ['page' => 2])).'"', false);
+        $this->get(route('recipes.show', ['recipe' => $recipe, 'origin' => 'mine']))
+            ->assertOk()->assertSee('← My recipes');
+        $this->get(route('recipes.show', ['recipe' => $recipe, 'origin' => 'https://example.com']))
+            ->assertOk()->assertSee('← My recipes')->assertDontSee('https://example.com');
+    }
+
+    #[Test]
     public function removing_a_category_chip_clears_its_branch_only(): void
     {
         $desserts = Category::factory()->create(['name' => 'Desserts']);
@@ -131,7 +151,7 @@ class PublicRecipeTest extends TestCase
         $this->get(route('home'))
             ->assertOk()
             ->assertSeeTextInOrder([$newer->title, $older->title])
-            ->assertSee('href="'.route('recipes.show', $newer, false).'"', false)
+            ->assertSee('href="'.route('recipes.show', ['recipe' => $newer, 'origin' => 'home'], false).'"', false)
             ->assertSee('src="'.route('recipes.thumbnail', $newer, false).'"', false)
             ->assertDontSee($draft->title)
             ->assertDontSee($future->title);

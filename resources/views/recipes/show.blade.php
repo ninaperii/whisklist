@@ -5,11 +5,7 @@
 @section('content')
     <article class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
         <div class="mb-6">
-            @can('update', $recipe)
-                <a class="font-semibold text-orange-700 hover:underline" href="{{ route('recipes.mine') }}">← My recipes</a>
-            @else
-                <a class="font-semibold text-orange-700 hover:underline" href="{{ route('recipes.index') }}">← All recipes</a>
-            @endcan
+            <a class="font-semibold text-orange-700 hover:underline" href="{{ $recipeOrigin['url'] }}">← {{ $recipeOrigin['label'] }}</a>
         </div>
 
         @if (session('status'))
@@ -34,7 +30,7 @@
         </header>
 
         @auth
-            <form class="mt-5" method="POST" action="{{ route($isSaved ? 'whisklist.destroy' : 'whisklist.store', $recipe) }}">
+            <form class="mt-5" method="POST" action="{{ route($isSaved ? 'whisklist.destroy' : 'whisklist.store', ['recipe' => $recipe] + $recipeOrigin['parameters']) }}">
                 @csrf
                 @if ($isSaved)
                     @method('DELETE')

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Cache;
 
 class GuestHomeCache
 {
-    private const string KEY = 'whisklist:guest-home:latest-recipes:v1';
+    private const string KEY = 'whisklist:guest-home:latest-recipes:v2';
 
     public function get(): array
     {

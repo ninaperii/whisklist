@@ -186,7 +186,7 @@
                 @else
                     <ul class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                         @foreach ($recipes as $recipe)
-                            <x-recipe-card :recipe="$recipe" heading="h2">
+                            <x-recipe-card :recipe="$recipe" heading="h2" origin="recipes" :origin-query="$filters + ($recipes->currentPage() > 1 ? ['page' => $recipes->currentPage()] : [])">
                                 @auth
                                     <form class="flex flex-wrap items-center justify-end gap-2 px-4 pb-3" method="POST" action="{{ route($recipe->is_saved ? 'whisklist.destroy' : 'whisklist.store', $recipe) }}" data-recipe-heart
                                         data-save-label="Save {{ $recipe->title }} to My WhiskList" data-remove-label="Remove {{ $recipe->title }} from My WhiskList">

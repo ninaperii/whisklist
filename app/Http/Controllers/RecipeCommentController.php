@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Recipe;
+use App\View\RecipeNavigation;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class RecipeCommentController extends Controller
         ]);
     }
 
-    public function show(Recipe $recipe, Comment $comment): RedirectResponse
+    public function show(Request $request, Recipe $recipe, Comment $comment): RedirectResponse
     {
         abort_unless($recipe->isPublished(), 404);
 
@@ -31,7 +32,7 @@ class RecipeCommentController extends Controller
         $page = intdiv($newerComments, Comment::RECIPE_PAGE_SIZE) + 1;
         $parameters = $page > 1 ? ['recipe' => $recipe, 'comments_page' => $page] : ['recipe' => $recipe];
 
-        return redirect(route('recipes.show', $parameters).'#comment-'.$comment->id);
+        return redirect(route('recipes.show', $parameters + RecipeNavigation::origin($request, $recipe)['parameters']).'#comment-'.$comment->id);
     }
 
     public function store(Request $request, Recipe $recipe): RedirectResponse
@@ -46,15 +47,19 @@ class RecipeCommentController extends Controller
             $comment->save();
         });
 
-        return $this->backToComments($recipe, 'Comment posted.');
+        return $this->backToComments($request, $recipe, 'Comment posted.');
     }
 
-    public function edit(Recipe $recipe, Comment $comment): View
+    public function edit(Request $request, Recipe $recipe, Comment $comment): View
     {
         abort_unless($recipe->isPublished(), 404);
         Gate::authorize('update', $comment);
 
-        return view('recipes.comments.edit', compact('recipe', 'comment'));
+        return view('recipes.comments.edit', [
+            'recipe' => $recipe,
+            'comment' => $comment,
+            'recipeOrigin' => RecipeNavigation::origin($request, $recipe),
+        ]);
     }
 
     public function update(Request $request, Recipe $recipe, Comment $comment): RedirectResponse
@@ -67,10 +72,10 @@ class RecipeCommentController extends Controller
             $this->lockPublishedRecipe($recipe)->comments()->findOrFail($comment->id)->update($data);
         });
 
-        return $this->backToComments($recipe, 'Comment updated.');
+        return $this->backToComments($request, $recipe, 'Comment updated.');
     }
 
-    public function destroy(Recipe $recipe, Comment $comment): RedirectResponse
+    public function destroy(Request $request, Recipe $recipe, Comment $comment): RedirectResponse
     {
         abort_unless($recipe->isPublished(), 404);
         Gate::authorize('delete', $comment);
@@ -79,7 +84,7 @@ class RecipeCommentController extends Controller
             $this->lockPublishedRecipe($recipe)->comments()->findOrFail($comment->id)->delete();
         });
 
-        return $this->backToComments($recipe, 'Comment deleted.');
+        return $this->backToComments($request, $recipe, 'Comment deleted.');
     }
 
     private function validateBody(Request $request): array
@@ -92,8 +97,10 @@ class RecipeCommentController extends Controller
         return Recipe::query()->published()->lockForUpdate()->findOrFail($recipe->id);
     }
 
-    private function backToComments(Recipe $recipe, string $message): RedirectResponse
+    private function backToComments(Request $request, Recipe $recipe, string $message): RedirectResponse
     {
-        return redirect(route('recipes.show', $recipe).'#comments')->with('comment_status', $message);
+        $parameters = ['recipe' => $recipe] + RecipeNavigation::origin($request, $recipe)['parameters'];
+
+        return redirect(route('recipes.show', $parameters).'#comments')->with('comment_status', $message);
     }
 }

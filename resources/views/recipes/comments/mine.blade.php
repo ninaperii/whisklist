@@ -12,7 +12,7 @@
                 <li class="p-5">
                     <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                         @if ($comment->recipe)
-                            <a class="font-semibold text-orange-700 hover:underline" href="{{ route('recipes.comments.show', [$comment->recipe, $comment]) }}">{{ $comment->recipe->title }}</a>
+                            <a class="font-semibold text-orange-700 hover:underline" href="{{ route('recipes.comments.show', ['recipe' => $comment->recipe, 'comment' => $comment, 'origin' => 'comments', 'origin_query' => request()->only('page')]) }}">{{ $comment->recipe->title }}</a>
                         @else
                             <span class="font-semibold text-stone-600">Recipe unavailable</span>
                         @endif

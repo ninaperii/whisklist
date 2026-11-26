@@ -50,7 +50,7 @@
             @else
                 <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($recipes as $recipe)
-                        <x-recipe-card :recipe="$recipe" />
+                        <x-recipe-card :recipe="$recipe" origin="profile" :origin-query="request()->only('page')" />
                     @endforeach
                 </ul>
             @endif

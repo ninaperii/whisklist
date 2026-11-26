@@ -8,6 +8,7 @@ use App\Models\Comment;
 use App\Models\DietaryTag;
 use App\Models\Ingredient;
 use App\Models\Recipe;
+use App\View\RecipeNavigation;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -195,6 +196,7 @@ class PublicRecipeController extends Controller
 
         return view('recipes.show', [
             'recipe' => $publishedRecipe,
+            'recipeOrigin' => RecipeNavigation::origin($request, $publishedRecipe),
             'comments' => $publishedRecipe->comments()->with('author')->orderByDesc('id')
                 ->paginate(Comment::RECIPE_PAGE_SIZE, pageName: 'comments_page')->fragment('comments'),
             'isSaved' => $request->user()?->savedRecipes()->wherePivot('recipe_id', $publishedRecipe->id)->exists() ?? false,
