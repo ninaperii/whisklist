@@ -1,3 +1,58 @@
+for (const picker of document.querySelectorAll('[data-search-picker]')) {
+    const search = picker.querySelector('[data-picker-search]');
+    const empty = picker.querySelector('[data-picker-empty]');
+    const selected = picker.querySelector('[data-picker-selected]');
+    const template = selected.querySelector('template');
+    const options = [...picker.querySelectorAll('[data-picker-option]')].map((element) => ({
+        element,
+        checkbox: element.querySelector('input'),
+        name: element.dataset.pickerOption,
+    }));
+
+    const filterOptions = () => {
+        const term = search.value.trim().toLocaleLowerCase();
+        let hasMatches = false;
+        for (const { element, name } of options) {
+            element.hidden = !name.toLocaleLowerCase().includes(term);
+            hasMatches ||= !element.hidden;
+        }
+        empty.hidden = hasMatches;
+    };
+
+    const showSelections = () => {
+        selected.querySelectorAll('button').forEach((button) => button.remove());
+        for (const { checkbox, name } of options) {
+            if (!checkbox.checked) {
+                continue;
+            }
+            const chip = template.content.firstElementChild.cloneNode(true);
+            chip.querySelector('[data-picker-chip-label]').textContent = name;
+            chip.setAttribute('aria-label', `Remove ${name}`);
+            chip.addEventListener('click', () => {
+                checkbox.click();
+                search.focus();
+            });
+            selected.append(chip);
+        }
+    };
+
+    picker.querySelector('[data-picker-search-label]').hidden = false;
+    search.addEventListener('input', filterOptions);
+    search.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+        }
+    });
+    // Category and ingredient exclusions can also change selections in another picker.
+    const form = picker.closest('form');
+    document.addEventListener('change', (event) => {
+        if (event.target.form === form && event.target.matches('[data-picker-option] input')) {
+            showSelections();
+        }
+    });
+    showSelections();
+}
+
 const thumbnailPicker = document.querySelector('[data-thumbnail-picker]');
 if (thumbnailPicker) {
     const input = thumbnailPicker.querySelector('input[type="file"]');
@@ -184,21 +239,24 @@ if (publicationNotice) {
 }
 
 const recipeEditor = document.querySelector('[data-recipe-editor]');
-if (recipeEditor) {
+const editors = [...document.querySelectorAll('[data-recipe-editor], [data-profile-editor]')];
+if (editors.length) {
     const leaveDialog = document.querySelector('#leave-recipe-editor');
     const publishDialog = document.querySelector('#publish-recipe');
     let publishButton;
     let publishConfirmed = false;
-    const readFields = () => JSON.stringify([...new FormData(recipeEditor)].filter(([, value]) => typeof value === 'string'));
-    const initialFields = readFields();
-    const hasChanges = () => recipeEditor.hasAttribute('data-unsaved-input')
-        || recipeEditor.querySelector('input[type="file"]').files.length > 0
-        || readFields() !== initialFields;
+    const readFields = (form) => JSON.stringify([...new FormData(form)].filter(([, value]) => typeof value === 'string'));
+    const initialFields = new Map(editors.map((form) => [form, readFields(form)]));
+    const hasChanges = (except) => editors.some((form) => form !== except && (
+        form.hasAttribute('data-unsaved-input')
+        || form.querySelector('input[type="file"]')?.files.length > 0
+        || readFields(form) !== initialFields.get(form)
+    ));
     let leaving = false;
     let continueNavigation;
 
-    const confirmNavigation = (event, navigate) => {
-        if (leaving || !hasChanges()) {
+    const confirmNavigation = (event, navigate, except) => {
+        if (leaving || !hasChanges(except)) {
             return;
         }
         event.preventDefault();
@@ -223,7 +281,7 @@ if (recipeEditor) {
         }
     });
 
-    recipeEditor.addEventListener('submit', (event) => {
+    recipeEditor?.addEventListener('submit', (event) => {
         if (publishDialog && event.submitter?.value === 'publish' && !publishConfirmed) {
             event.preventDefault();
             publishButton = event.submitter;
@@ -257,7 +315,10 @@ if (recipeEditor) {
     document.addEventListener('submit', (event) => {
         const form = event.target;
         if (!event.defaultPrevented && form !== recipeEditor && form.method !== 'dialog') {
-            confirmNavigation(event, () => form.requestSubmit(event.submitter ?? undefined));
+            confirmNavigation(event, () => form.requestSubmit(event.submitter ?? undefined), form);
+            if (!event.defaultPrevented) {
+                leaving = true;
+            }
         }
     });
 
@@ -267,7 +328,7 @@ if (recipeEditor) {
         const editorPath = sessionStorage.getItem(key);
         const isHistoryNavigation = event.persisted || performance.getEntriesByType('navigation')[0]?.type === 'back_forward';
 
-        if (editorPath && isHistoryNavigation) {
+        if (recipeEditor && editorPath && isHistoryNavigation) {
             leaving = true;
             sessionStorage.removeItem(key);
             window.location.replace(editorPath);

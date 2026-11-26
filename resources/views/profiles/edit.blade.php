@@ -17,7 +17,7 @@
                 </p>
             @endif
 
-            <form class="mt-8 space-y-6" method="POST" action="{{ route('profile.update') }}">
+            <form class="mt-8 space-y-6" method="POST" action="{{ route('profile.update') }}" data-profile-editor @if ($errors->getBag('default')->any()) data-unsaved-input @endif>
                 @csrf
                 @method('PUT')
 
@@ -84,5 +84,44 @@
                 </div>
             </form>
         </div>
+
+        <section id="recipe-preferences" class="mt-8 space-y-4 rounded-2xl bg-white p-6 ring-1 ring-stone-200">
+            <h2 class="text-xl font-semibold">Recipe preferences</h2>
+            <p class="text-sm text-stone-600">These choices are private. Apply them using <a class="font-semibold text-orange-700 underline" href="{{ route('recipes.index') }}">Use my preferences</a> on the Recipes page.</p>
+
+            @if (session('recipe_preference_status'))
+                <p role="status" class="text-sm text-green-800">{{ session('recipe_preference_status') }}</p>
+            @endif
+            @if ($errors->recipePreferences->any())
+                <ul role="alert" class="list-disc space-y-1 pl-5 text-sm text-red-700">
+                    @foreach ($errors->recipePreferences->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            @endif
+
+            <form class="space-y-5" method="POST" action="{{ route('profile.recipe-preferences.update') }}" data-profile-editor @if ($errors->recipePreferences->any()) data-unsaved-input @endif>
+                @csrf
+                @method('PUT')
+                @foreach ([
+                    'dietary_tags' => ['Preferred dietary tags', $dietaryTagOptions, $preferredTags],
+                    'exclude_ingredients' => ['Ingredients to avoid', $ingredientOptions, $excludedIngredients],
+                ] as $field => [$label, $options, $selected])
+                    <fieldset>
+                        <legend class="mb-2 font-semibold">{{ $label }}</legend>
+                        @if ($options->isEmpty())
+                            <p class="text-sm text-stone-600">No options available yet.</p>
+                        @else
+                            <x-search-picker :field="$field" :label="$label" :options="$options" :selected="$errors->recipePreferences->any() ? (array) old($field, []) : $selected" />
+                        @endif
+                    </fieldset>
+                @endforeach
+                <div class="flex flex-wrap gap-3">
+                    <button class="rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white hover:bg-orange-800" type="submit">Save preferences</button>
+                    <a class="rounded-lg border border-stone-300 px-5 py-2.5 font-semibold hover:bg-stone-50" href="{{ route('users.show', $user) }}">Discard changes</a>
+                </div>
+            </form>
+        </section>
+        <x-leave-editor-dialog />
     </section>
 @endsection

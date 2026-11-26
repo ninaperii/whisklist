@@ -25,28 +25,22 @@
                         <details class="rounded-lg border border-stone-200 p-3" @if (!empty($filters[$field])) open @endif>
                             <summary class="cursor-pointer font-semibold">{{ $label }}</summary>
                             <p class="my-2 text-sm text-stone-600">{{ $hint }}</p>
-                            <fieldset class="max-h-52 space-y-2 overflow-y-auto p-1">
-                                <legend class="sr-only">{{ $label }}</legend>
-                                @foreach ($options as $id => $name)
-                                    <label class="flex items-start gap-2 text-sm">
-                                        <input class="mt-1" type="checkbox" name="{{ $field }}[]" value="{{ $id }}"
-                                            @if (in_array($field, ['categories', 'exclude_categories'], true))
-                                                data-category-parent="{{ $categoryParents[$id] ?? '' }}"
-                                            @endif
-                                            @checked(in_array($id, $filters[$field] ?? []))>
-                                        {{ $name }}
-                                    </label>
-                                @endforeach
-                            </fieldset>
+                            <x-search-picker :field="$field" :label="$label" :options="$options" :selected="$filters[$field] ?? []"
+                                :parents="in_array($field, ['categories', 'exclude_categories'], true) ? $categoryParents : null" />
                         </details>
                     @endif
                 @endforeach
             </div>
             <div class="flex flex-wrap items-center gap-4">
+                @auth
+                    <label class="flex items-center gap-2 text-sm font-semibold">
+                        <input type="checkbox" name="use_preferences" value="1" @checked($filters['use_preferences'] ?? false)>
+                        Use my preferences
+                    </label>
+                    <a class="text-sm text-orange-700 hover:underline" href="{{ route('profile.edit') }}#recipe-preferences">Edit preferences</a>
+                @endauth
                 <button class="rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white" type="submit">Search recipes</button>
-                @if ($filters !== [])
-                    <a class="font-semibold text-orange-700 hover:underline" href="{{ route('recipes.index') }}">Clear filters</a>
-                @endif
+                <a class="font-semibold text-orange-700 hover:underline" href="{{ route('recipes.index') }}">Clear filters</a>
             </div>
         </form>
 

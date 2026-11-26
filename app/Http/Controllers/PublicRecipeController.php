@@ -19,6 +19,7 @@ class PublicRecipeController extends Controller
     {
         $validator = Validator::make($request->query(), [
             'q' => ['nullable', 'string', 'max:120'],
+            'use_preferences' => ['sometimes', 'boolean'],
             'categories' => ['sometimes', 'array', 'max:100'],
             'categories.*' => ['required', 'integer', 'distinct', 'exists:categories,id'],
             'exclude_categories' => ['sometimes', 'array', 'max:100'],
@@ -50,6 +51,18 @@ class PublicRecipeController extends Controller
 
         $categoryTree = Category::query()->orderBy('name')->get()->groupBy('parent_id');
         $query = Recipe::query()->published()->with('thumbnail');
+        $user = $request->user();
+        $usePreferences = $user !== null && (bool) ($filters['use_preferences'] ?? false);
+        if (! $usePreferences) {
+            unset($filters['use_preferences']);
+        }
+
+        $excludedIngredients = $filters['exclude_ingredients'] ?? [];
+        $dietaryTags = $filters['dietary_tags'] ?? [];
+        if ($usePreferences) {
+            $excludedIngredients = array_merge($excludedIngredients, $user->excludedIngredients()->allRelatedIds()->all());
+            $dietaryTags = array_unique(array_merge($dietaryTags, $user->preferredDietaryTags()->allRelatedIds()->all()));
+        }
 
         if (isset($filters['q'])) {
             $search = strtr($filters['q'], ['!' => '!!', '%' => '!%', '_' => '!_']);
@@ -66,13 +79,12 @@ class PublicRecipeController extends Controller
             $query->whereDoesntHave('categories', fn (Builder $categories): Builder => $categories->whereKey($excluded));
         }
 
-        if (isset($filters['exclude_ingredients'])) {
-            $excludedIngredients = array_map('intval', $filters['exclude_ingredients']);
-            $query->whereDoesntHave('ingredients', fn (Builder $ingredients): Builder => $ingredients->whereKey($excludedIngredients));
+        if ($excludedIngredients !== []) {
+            $query->whereDoesntHave('ingredients', fn (Builder $ingredients): Builder => $ingredients->whereKey(array_map('intval', $excludedIngredients)));
         }
 
-        foreach (['ingredients' => 'ingredients', 'dietary_tags' => 'dietaryTags'] as $filter => $relationship) {
-            foreach ($filters[$filter] ?? [] as $id) {
+        foreach (['ingredients' => $filters['ingredients'] ?? [], 'dietaryTags' => $dietaryTags] as $relationship => $ids) {
+            foreach ($ids as $id) {
                 $query->whereHas($relationship, fn (Builder $related): Builder => $related->whereKey((int) $id));
             }
         }

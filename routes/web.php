@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-recipes', [RecipeDraftController::class, 'index'])->name('recipes.mine');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/recipe-preferences', [ProfileController::class, 'updateRecipePreferences'])->name('profile.recipe-preferences.update');
 });
 
 Route::get('/recipes/{recipe}', [PublicRecipeController::class, 'show'])->name('recipes.show');
