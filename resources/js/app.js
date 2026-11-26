@@ -327,6 +327,99 @@ for (const list of document.querySelectorAll('[data-draft-list]')) {
     refreshRows();
 }
 
+const recipeResults = document.querySelector('[data-recipe-results]');
+if (recipeFilters && recipeResults) {
+    const status = document.querySelector('[data-recipe-search-status]');
+    const searchError = document.querySelector('[data-recipe-search-error]');
+    const preferenceLink = recipeFilters.querySelector('[data-edit-recipe-preferences]');
+    const titleInput = recipeFilters.elements.namedItem('q');
+    let timer;
+    let currentRequest;
+
+    const updateResults = async () => {
+        const url = new URL(recipeFilters.action);
+        const filters = new FormData(recipeFilters);
+        for (const [name, value] of filters) {
+            if (typeof value === 'string' && value.trim() !== '') {
+                url.searchParams.append(name, value);
+            }
+        }
+
+        const request = new AbortController();
+        currentRequest = request;
+        searchError.hidden = true;
+        recipeResults.setAttribute('aria-busy', 'true');
+        status.textContent = 'Updating recipes…';
+
+        try {
+            const response = await fetch(url, { signal: request.signal });
+            if (response.redirected && !request.signal.aborted) {
+                // A regular navigation lets Laravel display filter validation errors.
+                window.location.assign(url);
+                return;
+            }
+            if (!response.ok) {
+                throw new Error('Recipe search request failed');
+            }
+            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+            const updatedResults = page.querySelector('[data-recipe-results]');
+            if (!updatedResults) {
+                throw new Error('Recipe results were missing');
+            }
+            if (request.signal.aborted) {
+                return;
+            }
+
+            recipeResults.replaceChildren(...updatedResults.childNodes);
+            const updatedLink = page.querySelector('[data-edit-recipe-preferences]');
+            if (preferenceLink && updatedLink) {
+                preferenceLink.href = updatedLink.href;
+            }
+            if (url.href !== window.location.href) {
+                window.history.pushState(null, '', url);
+            }
+            status.textContent = recipeResults.querySelector('[data-recipe-result-count]').textContent;
+        } catch {
+            if (!request.signal.aborted) {
+                status.textContent = '';
+                searchError.hidden = false;
+            }
+        } finally {
+            if (currentRequest === request) {
+                recipeResults.removeAttribute('aria-busy');
+            }
+        }
+    };
+
+    const queueUpdate = (delay) => {
+        clearTimeout(timer);
+        currentRequest?.abort();
+        timer = window.setTimeout(updateResults, delay);
+    };
+
+    recipeFilters.addEventListener('change', (event) => {
+        if (event.target.name && event.target !== titleInput) {
+            queueUpdate(0);
+        }
+    });
+    titleInput.addEventListener('input', (event) => {
+        if (!event.isComposing) {
+            queueUpdate(300);
+        }
+    });
+    titleInput.addEventListener('compositionend', () => queueUpdate(300));
+    recipeFilters.addEventListener('submit', (event) => {
+        event.preventDefault();
+        queueUpdate(0);
+    });
+    searchError.querySelector('[data-retry-recipe-search]').addEventListener('click', () => queueUpdate(0));
+    window.addEventListener('popstate', () => {
+        clearTimeout(timer);
+        currentRequest?.abort();
+        window.location.reload();
+    });
+}
+
 const publicationNotice = document.querySelector('[data-published-from]');
 if (publicationNotice) {
     const { publishedFrom, publishedEditor } = publicationNotice.dataset;
