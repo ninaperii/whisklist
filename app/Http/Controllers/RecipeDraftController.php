@@ -16,6 +16,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
@@ -203,13 +204,18 @@ class RecipeDraftController extends Controller
         $recipe->dietaryTags()->sync($data['dietary_tags'] ?? []);
 
         $ingredients = [];
-        foreach (array_values($data['ingredients'] ?? []) as $index => $ingredient) {
-            $ingredients[$ingredient['id']] = [
+        foreach ($data['ingredients'] ?? [] as $index => $ingredient) {
+            $ingredientId = $ingredient['id'] ?? $this->findOrCreateIngredient($ingredient['new_name'])->id;
+            if (isset($ingredients[$ingredientId])) {
+                throw ValidationException::withMessages(["ingredients.{$index}.id" => 'Each ingredient can only appear once in a recipe.']);
+            }
+
+            $ingredients[$ingredientId] = [
                 'quantity' => $ingredient['quantity'] ?? null,
                 'unit' => $ingredient['unit'] ?? null,
                 'notes' => $ingredient['notes'] ?? null,
                 'is_main' => $ingredient['is_main'] ?? false,
-                'position' => $index + 1,
+                'position' => count($ingredients) + 1,
             ];
         }
 
@@ -222,5 +228,16 @@ class RecipeDraftController extends Controller
             $recipe->steps()->updateOrCreate(['position' => $index + 1], ['instruction' => $instruction]);
         }
         $recipe->steps()->where('position', '>', count($steps))->delete();
+    }
+
+    private function findOrCreateIngredient(string $name): Ingredient
+    {
+        $name = Str::squish($name);
+        $slug = Str::slug($name);
+        if ($slug === '' || strlen($slug) > 255) {
+            $slug = 'ingredient-'.hash('sha256', Str::lower($name));
+        }
+
+        return Ingredient::query()->firstOrCreate(['slug' => $slug], ['name' => $name]);
     }
 }

@@ -31,8 +31,9 @@ class SaveRecipeDraftRequest extends FormRequest
             'dietary_tags' => ['sometimes', 'array', 'max:50'],
             'dietary_tags.*' => ['required', 'integer', 'distinct', 'exists:dietary_tags,id'],
             'ingredients' => ['sometimes', 'array', 'max:100'],
-            'ingredients.*' => ['required', 'array:id,quantity,unit,notes,is_main'],
-            'ingredients.*.id' => ['required', 'integer', 'distinct', 'exists:ingredients,id'],
+            'ingredients.*' => ['required', 'array:id,new_name,quantity,unit,notes,is_main'],
+            'ingredients.*.id' => ['nullable', 'required_without:ingredients.*.new_name', 'prohibits:ingredients.*.new_name', 'integer', 'distinct', 'exists:ingredients,id'],
+            'ingredients.*.new_name' => ['nullable', 'required_without:ingredients.*.id', 'string', 'max:80', 'regex:/[\pL\pN]/u'],
             'ingredients.*.quantity' => ['nullable', 'numeric', 'decimal:0,2', 'min:0.01', 'max:999999.99'],
             'ingredients.*.unit' => ['nullable', 'string', 'max:50'],
             'ingredients.*.notes' => ['nullable', 'string', 'max:255'],
@@ -46,6 +47,7 @@ class SaveRecipeDraftRequest extends FormRequest
     {
         return [
             'ingredients.*.id' => 'ingredient',
+            'ingredients.*.new_name' => 'new ingredient name',
             'ingredients.*.quantity' => 'quantity',
             'ingredients.*.unit' => 'unit',
             'ingredients.*.notes' => 'ingredient notes',

@@ -310,7 +310,7 @@ for (const list of document.querySelectorAll('[data-draft-list]')) {
     addButton.addEventListener('click', () => {
         rows.append(template.content.cloneNode(true));
         refreshRows();
-        rows.lastElementChild.querySelector('select, textarea')?.focus();
+        rows.lastElementChild.querySelector('select, textarea, input[data-new-ingredient-name]')?.focus();
     });
 
     rows.addEventListener('click', (event) => {

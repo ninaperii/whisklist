@@ -80,19 +80,20 @@
 
             <section class="{{ $sectionClass }}" data-draft-list>
                 <h2 class="text-xl font-semibold">Ingredients</h2>
-                @if ($ingredients->isEmpty())
-                    <p class="text-sm text-stone-600">An administrator can add ingredients for you to select here.</p>
-                @else
-                    <div class="space-y-4" data-rows>
-                        @foreach (array_slice((array) $ingredientRows, 0, 100, true) as $index => $row)
-                            @include('recipes.ingredient-row')
-                        @endforeach
-                    </div>
-                    <template data-row-template>
-                        @include('recipes.ingredient-row', ['index' => '__index__', 'row' => []])
-                    </template>
-                    <button class="rounded-lg border border-stone-300 px-4 py-2 font-semibold" type="button" data-add>+ Add ingredient</button>
-                @endif
+                <datalist id="ingredient-units">
+                    @foreach (['g', 'kg', 'mL', 'L', 'tsp', 'tbsp', 'cup', 'oz', 'lb', 'pinch', 'piece', 'clove', 'slice'] as $unit)
+                        <option value="{{ $unit }}"></option>
+                    @endforeach
+                </datalist>
+                <div class="space-y-4" data-rows>
+                    @foreach (array_slice((array) $ingredientRows, 0, 100, true) as $index => $row)
+                        @include('recipes.ingredient-row')
+                    @endforeach
+                </div>
+                <template data-row-template>
+                    @include('recipes.ingredient-row', ['index' => '__index__', 'row' => []])
+                </template>
+                <button class="rounded-lg border border-stone-300 px-4 py-2 font-semibold" type="button" data-add>+ Add ingredient</button>
             </section>
 
             <section class="{{ $sectionClass }}" data-draft-list>

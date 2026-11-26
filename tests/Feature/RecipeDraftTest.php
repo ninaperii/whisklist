@@ -98,6 +98,37 @@ class RecipeDraftTest extends TestCase
         $this->assertDatabaseCount('recipes', 0);
     }
 
+    #[Test]
+    public function authors_can_add_new_ingredients_to_an_empty_catalog_and_reuse_them_by_name(): void
+    {
+        $this->actingAs(User::factory()->create())->get(route('recipes.create'))
+            ->assertOk()->assertSee('Add a new ingredient');
+        $this->post(route('recipes.store'), $this->draftData() + [
+            'ingredients' => [['new_name' => 'Rice flour', 'quantity' => 200, 'unit' => 'g', 'is_main' => true]],
+        ])->assertRedirect(route('recipes.edit', 'apple-pie'));
+
+        $recipe = Recipe::query()->sole();
+        $ingredient = Ingredient::query()->sole();
+        $this->assertSame('Rice flour', $ingredient->name);
+        $this->assertEquals(200, $recipe->ingredients()->sole()->pivot->quantity);
+        $this->put(route('recipes.update', $recipe), $this->draftData() + [
+            'ingredients' => [['new_name' => 'RICE  FLOUR']],
+        ])->assertRedirect(route('recipes.edit', $recipe));
+        $this->assertDatabaseCount('ingredients', 1);
+    }
+
+    #[Test]
+    public function duplicate_new_ingredient_names_roll_back_the_recipe_and_catalog_change(): void
+    {
+        $this->actingAs(User::factory()->create())->from(route('recipes.create'))
+            ->post(route('recipes.store'), $this->draftData() + [
+                'ingredients' => [['new_name' => 'Rice flour'], ['new_name' => 'rice FLOUR']],
+            ])->assertSessionHasErrors('ingredients.1.id');
+
+        $this->assertDatabaseCount('ingredients', 0);
+        $this->assertDatabaseCount('recipes', 0);
+    }
+
     private function draftData(): array
     {
         return [
