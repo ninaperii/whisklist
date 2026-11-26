@@ -43,6 +43,9 @@
             </section>
         </div>
 
-        <a class="mt-8 inline-block rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white" href="{{ route('recipes.create') }}">Create recipe</a>
+        <div class="mt-8 flex flex-wrap gap-3">
+            <a class="rounded-lg bg-orange-700 px-5 py-2.5 font-semibold text-white" href="{{ route('recipes.create') }}">Create recipe</a>
+            <a class="rounded-lg border border-stone-300 bg-white px-5 py-2.5 font-semibold hover:bg-stone-50" href="{{ route('comments.mine') }}">My comments</a>
+        </div>
     </section>
 @endsection

@@ -11,6 +11,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicRecipeController;
+use App\Http\Controllers\RecipeCommentController;
 use App\Http\Controllers\RecipeDraftController;
 use App\Http\Controllers\RecipeThumbnailController;
 use App\Http\Controllers\WhiskListController;
@@ -43,7 +44,11 @@ Route::get('/users/{user}', [ProfileController::class, 'show'])
 Route::middleware('auth')->group(function () {
     Route::resource('recipes', RecipeDraftController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
     Route::patch('/recipes/{recipe}/unpublish', [RecipeDraftController::class, 'unpublish'])->name('recipes.unpublish');
+    Route::scopeBindings()->group(function (): void {
+        Route::resource('recipes.comments', RecipeCommentController::class)->only(['store', 'edit', 'update', 'destroy']);
+    });
     Route::get('/my-recipes', [RecipeDraftController::class, 'index'])->name('recipes.mine');
+    Route::get('/my-comments', [RecipeCommentController::class, 'mine'])->name('comments.mine');
     Route::get('/whisklist', [WhiskListController::class, 'index'])->name('whisklist.index');
     Route::post('/whisklist/{recipe}', [WhiskListController::class, 'store'])->name('whisklist.store');
     Route::delete('/whisklist/{recipe}', [WhiskListController::class, 'destroy'])->name('whisklist.destroy');
@@ -53,6 +58,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/recipes/{recipe}', [PublicRecipeController::class, 'show'])->name('recipes.show');
+Route::get('/recipes/{recipe}/comments/{comment}', [RecipeCommentController::class, 'show'])->scopeBindings()->name('recipes.comments.show');
 Route::get('/recipes/{recipe}/thumbnail', RecipeThumbnailController::class)->name('recipes.thumbnail');
 
 Route::prefix('admin')

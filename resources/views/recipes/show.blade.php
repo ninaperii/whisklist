@@ -107,5 +107,6 @@
                 </ol>
             </section>
         </div>
+        @include('recipes.comments.index')
     </article>
 @endsection

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\RecipeDifficulty;
 use App\Models\Category;
+use App\Models\Comment;
 use App\Models\DietaryTag;
 use App\Models\Ingredient;
 use App\Models\Recipe;
@@ -194,6 +195,8 @@ class PublicRecipeController extends Controller
 
         return view('recipes.show', [
             'recipe' => $publishedRecipe,
+            'comments' => $publishedRecipe->comments()->with('author')->orderByDesc('id')
+                ->paginate(Comment::RECIPE_PAGE_SIZE, pageName: 'comments_page')->fragment('comments'),
             'isSaved' => $request->user()?->savedRecipes()->wherePivot('recipe_id', $publishedRecipe->id)->exists() ?? false,
         ]);
     }

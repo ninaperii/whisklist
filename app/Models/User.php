@@ -48,6 +48,11 @@ class User extends Authenticatable
         return $this->hasMany(Recipe::class);
     }
 
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
     public function savedRecipes(): BelongsToMany
     {
         return $this->belongsToMany(Recipe::class, 'recipe_saves')->withPivot('created_at');
