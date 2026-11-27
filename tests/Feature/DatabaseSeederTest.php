@@ -14,19 +14,21 @@ class DatabaseSeederTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function a_single_configured_administrator_and_demonstration_users_are_seeded_idempotently(): void
+    public function only_the_configured_administrator_is_seeded_idempotently(): void
     {
-        config(['whisklist.admin_password' => 'test-admin-passphrase']);
+        config([
+            'whisklist.admin_email' => 'example-admin@example.test',
+            'whisklist.admin_password' => 'test-admin-passphrase',
+        ]);
         $this->seed();
         config(['whisklist.admin_password' => 'unused-after-first-seed']);
         $this->seed();
 
-        $this->assertDatabaseCount('users', 7);
+        $this->assertDatabaseCount('users', 1);
         $administrator = User::query()->where('role', UserRole::Admin)->sole();
-        $this->assertSame('admin@example.com', $administrator->email);
+        $this->assertSame('example-admin@example.test', $administrator->email);
         $this->assertTrue(Hash::check('test-admin-passphrase', $administrator->password));
 
-        $this->assertSame(6, User::query()->where('role', UserRole::User)->count());
     }
 
     #[Test]

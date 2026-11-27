@@ -21,6 +21,9 @@
 /storage/*.key
 /storage/pail
 /vendor
+/database/seeders/DemoRecipeSeeder.php
+/database/seeders/RecipeTaxonomySeeder.php
+/tests/Feature/DemoRecipeSeederTest.php
 _ide_helper.php
 Homestead.json
 Homestead.yaml
