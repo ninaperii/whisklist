@@ -47,6 +47,7 @@ for (const picker of document.querySelectorAll('[data-search-picker]')) {
     });
     // Category and ingredient exclusions can also change selections in another picker.
     const form = picker.closest('form');
+    form?.addEventListener('recipe-filters-synced', showSelections);
     document.addEventListener('change', (event) => {
         if (event.target.form === form && event.target.matches('[data-picker-option] input')) {
             showSelections();
@@ -224,11 +225,20 @@ if (recipeFilters) {
     });
 
     refreshParentStates();
+    recipeFilters.addEventListener('recipe-filters-synced', refreshParentStates);
 
     const preferencesToggle = recipeFilters.querySelector('[name="use_preferences"]');
     if (preferencesToggle) {
         const saved = [...recipeFilters.querySelectorAll('[data-saved-filter]')];
         const manual = new Set(saved.filter((input) => input.checked && !input.hasAttribute('data-automatic-filter')));
+        recipeFilters.addEventListener('recipe-filters-synced', () => {
+            manual.clear();
+            for (const input of saved) {
+                if (input.checked && !input.hasAttribute('data-automatic-filter')) {
+                    manual.add(input);
+                }
+            }
+        });
 
         preferencesToggle.addEventListener('change', () => {
             for (const input of saved) {
@@ -377,13 +387,28 @@ if (recipeFilters && recipeResults) {
     const titleInput = recipeFilters.elements.namedItem('q');
     let timer;
     let currentRequest;
+    let retryUrl;
 
-    const updateResults = async () => {
-        const url = new URL(recipeFilters.action);
-        const filters = new FormData(recipeFilters);
-        for (const [name, value] of filters) {
-            if (typeof value === 'string' && value.trim() !== '') {
-                url.searchParams.append(name, value);
+    const syncFilterControls = (updatedForm) => {
+        const selectionKey = (input) => JSON.stringify([input.name, input.value]);
+        const updatedInputs = new Map([...updatedForm.querySelectorAll('input[type="checkbox"], input[type="radio"]')]
+            .map((input) => [selectionKey(input), input]));
+        for (const input of recipeFilters.querySelectorAll('input[type="checkbox"], input[type="radio"]')) {
+            const updatedInput = updatedInputs.get(selectionKey(input));
+            input.checked = updatedInput?.checked ?? false;
+            input.toggleAttribute('data-automatic-filter', updatedInput?.hasAttribute('data-automatic-filter') ?? false);
+        }
+        titleInput.value = updatedForm.elements.namedItem('q').value;
+        recipeFilters.dispatchEvent(new Event('recipe-filters-synced'));
+    };
+
+    const updateResults = async (destination) => {
+        const url = new URL(destination ?? recipeFilters.action);
+        if (!destination) {
+            for (const [name, value] of new FormData(recipeFilters)) {
+                if (typeof value === 'string' && value.trim() !== '') {
+                    url.searchParams.append(name, value);
+                }
             }
         }
 
@@ -405,13 +430,19 @@ if (recipeFilters && recipeResults) {
             }
             const page = new DOMParser().parseFromString(await response.text(), 'text/html');
             const updatedResults = page.querySelector('[data-recipe-results]');
-            if (!updatedResults) {
+            const updatedForm = page.querySelector('[data-recipe-filters]');
+            if (!updatedResults || !updatedForm) {
                 throw new Error('Recipe results were missing');
             }
             if (request.signal.aborted) {
                 return;
             }
 
+            const focusedChip = recipeResults.contains(document.activeElement)
+                && document.activeElement.matches('[data-remove-recipe-filter]');
+            if (destination) {
+                syncFilterControls(updatedForm);
+            }
             recipeResults.replaceChildren(...updatedResults.childNodes);
             const updatedLink = page.querySelector('[data-edit-recipe-preferences]');
             if (preferenceLink && updatedLink) {
@@ -420,9 +451,14 @@ if (recipeFilters && recipeResults) {
             if (url.href !== window.location.href) {
                 window.history.pushState(null, '', url);
             }
-            status.textContent = recipeResults.querySelector('[data-recipe-result-count]').textContent;
+            const resultCount = recipeResults.querySelector('[data-recipe-result-count]');
+            status.textContent = resultCount.textContent;
+            if (focusedChip) {
+                resultCount.focus({ preventScroll: true });
+            }
         } catch {
             if (!request.signal.aborted) {
+                retryUrl = destination;
                 status.textContent = '';
                 searchError.hidden = false;
             }
@@ -433,10 +469,10 @@ if (recipeFilters && recipeResults) {
         }
     };
 
-    const queueUpdate = (delay) => {
+    const queueUpdate = (delay, destination) => {
         clearTimeout(timer);
         currentRequest?.abort();
-        timer = window.setTimeout(updateResults, delay);
+        timer = window.setTimeout(() => updateResults(destination), delay);
     };
 
     recipeFilters.addEventListener('change', (event) => {
@@ -454,7 +490,16 @@ if (recipeFilters && recipeResults) {
         event.preventDefault();
         queueUpdate(0);
     });
-    searchError.querySelector('[data-retry-recipe-search]').addEventListener('click', () => queueUpdate(0));
+    recipeResults.addEventListener('click', (event) => {
+        const chip = event.target.closest('[data-remove-recipe-filter]');
+        if (!chip || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey
+            || event.shiftKey || event.altKey) {
+            return;
+        }
+        event.preventDefault();
+        queueUpdate(0, chip.href);
+    });
+    searchError.querySelector('[data-retry-recipe-search]').addEventListener('click', () => queueUpdate(0, retryUrl));
     window.addEventListener('popstate', () => {
         clearTimeout(timer);
         currentRequest?.abort();

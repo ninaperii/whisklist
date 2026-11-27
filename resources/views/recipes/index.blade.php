@@ -36,8 +36,8 @@
                 @if ($errors->any())
                     <p class="mb-4 text-sm text-red-700" role="alert">{{ $errors->first('category_conflict') ?: ($errors->first('ingredient_conflict') ?: 'Some filters were invalid or are no longer available. Choose your filters again.') }}</p>
                 @endif
-                <label class="block font-semibold" for="recipe-search">Search by recipe title</label>
-                <input class="mt-2 w-full rounded-lg border border-stone-300 px-3 py-2" id="recipe-search" type="search" name="q" value="{{ $filters['q'] ?? '' }}" maxlength="120">
+                <label class="sr-only" for="recipe-search">Search by recipe title</label>
+                <input class="w-full rounded-lg border border-stone-300 px-3 py-2" id="recipe-search" type="search" name="q" placeholder="Search by recipe title…" value="{{ $filters['q'] ?? '' }}" maxlength="120">
 
                 <details class="mt-5" open data-filter-panel>
                     <summary class="cursor-pointer font-semibold">Filters</summary>
@@ -102,7 +102,7 @@
                                                 @endif
                                                 <x-search-picker :field="$field" :label="$label" :options="$options" :selected="$effectiveFilters[$field] ?? []"
                                                     :parents="in_array($field, ['categories', 'exclude_categories'], true) ? $categoryParents : null"
-                                                    :saved="$savedPreferences[$field] ?? []" :applied="$appliedPreferences[$field] ?? []" :compact-search="true" />
+                                                    :saved="$savedPreferences[$field] ?? []" :applied="$appliedPreferences[$field] ?? []" />
                                             </fieldset>
                                         @endif
                                     @endforeach
@@ -138,11 +138,11 @@
                     <button class="mt-2 font-semibold underline" type="button" data-retry-recipe-search>Retry</button>
                 </div>
                 <div data-recipe-results>
-                <p class="mb-4 font-semibold text-stone-700" data-recipe-result-count>{{ $recipes->total() }} {{ Str::plural('recipe', $recipes->total()) }}</p>
+                <p class="mb-4 font-semibold text-stone-700" data-recipe-result-count tabindex="-1">{{ $recipes->total() }} {{ Str::plural('recipe', $recipes->total()) }}</p>
                 <div class="mb-5 flex flex-wrap gap-2" aria-label="Applied filters">
                     @foreach ($quickFilters as $field => $label)
                         @if ($label)
-                            <a class="{{ $chipClass }}" href="{{ route('recipes.index', Arr::except($filters, [$field])) }}" aria-label="Remove {{ $label }}">{{ $label }} ×</a>
+                            <a class="{{ $chipClass }}" href="{{ route('recipes.index', Arr::except($filters, [$field])) }}" aria-label="Remove {{ $label }}" data-remove-recipe-filter>{{ $label }} ×</a>
                         @endif
                     @endforeach
                     @foreach (['difficulty' => ['Difficulty', collect($difficulties)->mapWithKeys(fn ($level) => [$level->value => $level->name])]] + $groups as $field => [$label, $options])
@@ -163,7 +163,7 @@
                                     }
                                 }
                             @endphp
-                            <a class="{{ $chipClass }}" href="{{ route('recipes.index', $remaining) }}" aria-label="Remove {{ $label }}: {{ $name }}">
+                            <a class="{{ $chipClass }}" href="{{ route('recipes.index', $remaining) }}" aria-label="Remove {{ $label }}: {{ $name }}" data-remove-recipe-filter>
                                 {{ str_starts_with($field, 'exclude_') ? 'Exclude: ' : '' }}{{ $name }}{{ $fromPreferences ? ' (from preferences)' : '' }} ×
                             </a>
                         @endforeach

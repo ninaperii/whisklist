@@ -1,9 +1,9 @@
-@props(['field', 'label', 'options', 'selected' => [], 'parents' => null, 'saved' => [], 'applied' => [], 'compactSearch' => false])
+@props(['field', 'label', 'options', 'selected' => [], 'parents' => null, 'saved' => [], 'applied' => []])
 
 <div data-search-picker>
-    <label class="mb-2 block text-sm font-medium" hidden data-picker-search-label>
-        <span @class(['sr-only' => $compactSearch])>Search {{ strtolower($label) }}</span>
-        <input class="mt-1 block w-full rounded-lg border border-stone-300 px-3 py-2" type="search" autocomplete="off" @if ($compactSearch) placeholder="Search…" @endif data-picker-search>
+    <label class="mb-2 block" hidden data-picker-search-label>
+        <span class="sr-only">Search {{ strtolower($label) }}</span>
+        <input class="block w-full rounded-lg border border-stone-300 px-3 py-2" type="search" autocomplete="off" placeholder="Search…" data-picker-search>
     </label>
     <ul class="box-content max-h-27 overflow-y-auto rounded-lg border border-stone-200" aria-label="{{ $label }}">
         @foreach ($options as $id => $name)
