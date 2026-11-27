@@ -364,17 +364,12 @@ Queries will eager-load only the relationships required by each page to avoid N+
 
 ## Seeded demonstration data
 
-Every model will have a factory, and `DatabaseSeeder` will create realistic demonstration data and relationships. The application will include both required administrator accounts for compatibility with the provided project documents:
+Every model has a factory. The optional `DemoRecipeSeeder` creates fictional recipes and related demonstration data.
 
-| Email | Password | Role |
-| --- | --- | --- |
-| `admin@example.com` | `password` | Administrator |
-| `admin@admin.com` | `password` | Administrator |
-
-Seeded recipes will include categories, ingredients, instruction steps, comments, images, and saved-recipe relationships so the application is useful immediately after running:
+To add demo recipes, ingredients, steps, comments, images, and saved lists to a migrated database, run:
 
 ```bash
-php artisan migrate:fresh --seed
+php artisan db:seed --class=DemoRecipeSeeder
 ```
 
 ## Validation and testing strategy

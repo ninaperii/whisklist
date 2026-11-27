@@ -16,21 +16,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->seedUser([
-            'name' => 'WhiskList Administrator',
-            'email' => 'admin@example.com',
-            'role' => UserRole::Admin,
-            'bio' => 'Administrator account used to evaluate WhiskList.',
-            'is_profile_public' => false,
-        ]);
-
-        $this->seedUser([
-            'name' => 'Course Administrator',
-            'email' => 'admin@admin.com',
-            'role' => UserRole::Admin,
-            'bio' => 'Compatibility administrator account for the project requirements.',
-            'is_profile_public' => false,
-        ]);
+        $password = config('whisklist.admin_password');
+        if (is_string($password) && $password !== '' && ! User::query()->where('email', 'admin@example.com')->exists()) {
+            $this->seedUser([
+                'name' => 'WhiskList Administrator',
+                'email' => 'admin@example.com',
+                'role' => UserRole::Admin,
+                'bio' => 'WhiskList administrator.',
+                'is_profile_public' => false,
+                'password' => $password,
+            ]);
+        }
 
         foreach ($this->demonstrationUsers() as $user) {
             $this->seedUser($user);
@@ -40,13 +36,13 @@ class DatabaseSeeder extends Seeder
     /**
      * Create or update a deterministic seeded user using the model factory.
      *
-     * @param  array{name: string, email: string, role?: UserRole, bio: string, is_profile_public: bool}  $overrides
+     * @param  array{name: string, email: string, role?: UserRole, bio: string, is_profile_public: bool, password?: string}  $overrides
      */
     private function seedUser(array $overrides): void
     {
         $attributes = User::factory()->raw([
-            ...$overrides,
             'password' => 'password',
+            ...$overrides,
         ]);
 
         $user = User::query()->firstOrNew([
