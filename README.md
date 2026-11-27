@@ -1,429 +1,63 @@
 # WhiskList
 
-WhiskList is a community recipe-sharing web application built with Laravel. Visitors can discover recipes and filter them by categories or ingredients. Registered users can publish recipes, discuss them, upload food photos, and save recipes to a personal WhiskList. Administrators maintain the platform's categories and ingredients and moderate user-created content.
+WhiskList is a recipe-sharing app. Visitors can browse published recipes, search by title, and filter by category, ingredients, dietary tags, difficulty, or total time. Signed-in users can publish recipes, save favorites to a private WhiskList, comment, and apply their own dietary and ingredient preferences.
 
-> Status: project foundation and MVP definition. The application features described below are planned and will be implemented incrementally.
+## Features
 
-## Project goals
+- Draft and publish recipes with measured ingredients, ordered instructions, and a thumbnail. Authors can edit, unpublish, or delete their own recipes.
+- Browse nested categories, include or exclude ingredients, and match any or all selected ingredients.
+- Save recipes, manage your own comments, and customize your profile and photo.
+- Get personalized allergen warnings based on the known allergen links entered by administrators. Missing warnings do not establish that a recipe is safe for a particular allergy.
+- Manage categories, ingredients, dietary tags, and allergen links from the admin area.
 
-WhiskList is intended to demonstrate the backend concepts covered by the course through one coherent application:
+## Architecture
 
-- Laravel models and relationships
-- RESTful routes and resource controllers
-- Blade views and reusable layouts/components
-- Authentication and role-based authorization
-- Complete CRUD workflows
-- Form validation and useful error feedback
-- Image uploads and file storage
-- Database factories and realistic seeded data
-- Search, filtering, and non-CRUD business actions
-- Automated feature and unit tests
-- Efficient database access without N+1 queries
+WhiskList uses Laravel 13 with MySQL, Blade, Tailwind CSS, and Vite. Routes and controllers handle the web workflows. Form requests and validators check input, while middleware and policies enforce sign-in, admin access, and ownership.
 
-The interface should be usable and consistent, but backend quality takes priority over elaborate frontend design.
+Eloquent models connect recipes to authors, instructions, comments, categories, ingredients, and dietary tags. The ingredient relationship carries quantity, unit, notes, and order. Separate database tables track saved recipes and personal preferences.
 
-## User roles
+Recipe thumbnails and profile photos live under `storage/app/private`. MySQL records the file paths, and Laravel routes serve the images. Draft recipe thumbnails are restricted to their authors. A private profile hides the biography from other visitors, while the name, photo, and published recipes remain visible.
 
-### Visitor
+## Local setup
 
-A visitor can:
+You’ll need PHP 8.4 or newer within the 8.x series, Composer 2, MySQL, and Node.js 22.12 or newer with npm. Enable PHP’s `pdo_mysql` extension. The test suite also uses `pdo_sqlite` and GD with PNG support.
 
-- View the welcome page.
-- Browse published recipes.
-- View a recipe's ingredients, instructions, images, and comments.
-- Search and filter recipes by title, category, and ingredients.
-- Browse categories and user profiles that their owners have made public.
+1. Clone the repository and open the project directory.
 
-A visitor cannot create, save, comment on, or modify content.
+   ```sh
+   git clone https://github.com/ninaperii/whisklist.git
+   cd whisklist
+   composer install
+   npm ci
+   ```
 
-### Registered user
+2. On a new checkout, copy `.env.example` to `.env` (`Copy-Item .env.example .env` in PowerShell, or `cp .env.example .env` on macOS/Linux). Create an empty MySQL database, then set `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` in `.env`. Set `APP_URL` to the URL you’ll use locally.
+3. For optional admin access, set `WHISKLIST_ADMIN_EMAIL` and `WHISKLIST_ADMIN_PASSWORD` in your local `.env` before seeding. The seeder creates the administrator only if the email is unused. It leaves existing accounts untouched.
+4. Generate the app key on the new checkout, migrate the database, build the frontend, and start Laravel.
 
-A registered user can:
+   ```sh
+   php artisan key:generate
+   php artisan migrate --seed
+   npm run build
+   php artisan serve
+   ```
 
-- Use all public functionality.
-- Manage their profile and choose whether it is public or private.
-- Create and manage their own recipes, including ingredients, categories, steps, and images.
-- Comment on recipes and optionally attach an image.
-- Manage their own comments.
-- Save other recipes to a personal list called **My WhiskList**.
-- Use a dashboard to access their published recipes, drafts, and saved favorites.
+5. Open the URL printed by Laravel. On an existing installation, use `php artisan migrate` for pending migrations and keep your current `APP_KEY`.
 
-### Administrator
+A fresh database starts without sample recipes. To publish a recipe, first add a category in the admin area. Authors can add missing ingredients directly from the recipe form.
 
-An administrator can:
+## Tests
 
-- Manage categories and the canonical ingredient list.
-- Moderate recipes and comments when necessary.
-- Access an administration dashboard in addition to normal user functionality.
-
-User and administrator permissions will be enforced on the server through middleware and Laravel policies, not only by hiding interface controls.
-
-## MVP scope
-
-The first complete version will include:
-
-1. Registration, login, and logout.
-2. A public welcome page and public recipe discovery.
-3. Recipe CRUD with ownership and authorization.
-4. Multiple categories per recipe.
-5. Structured recipe ingredients with quantity, unit, notes, and a main-ingredient flag.
-6. Ordered recipe instruction steps.
-7. A required recipe thumbnail plus optional recipe and step images.
-8. Comments with optional image attachments.
-9. A personal saved-recipe list called **My WhiskList**.
-10. Administrator CRUD for categories and ingredients.
-11. Administrator moderation of recipes and comments.
-12. Search and filtering by title, categories, and selected ingredients.
-13. Validation, policies, factories, seeders, and automated tests.
-
-## Out of scope for the initial MVP
-
-The following ideas may be added after the core application is complete:
-
-- Recipe ratings
-- Following other users
-- User-to-user notifications
-- Nutritional calculations
-- Automatic shopping lists
-- Social-media sharing
-- Recipe version history
-- Multiple languages
-- Advanced image transformations
-
-Keeping these features out of the initial MVP prevents the project from becoming too broad before its required backend functionality is reliable.
-
-## Planned data model
-
-### User
-
-Represents an account and determines whether the account is a regular user or administrator.
-
-Planned fields:
-
-- `id`
-- `name`
-- `email`
-- `password`
-- `role`
-- `bio` (optional)
-- `avatar_path` (optional)
-- `is_profile_public`
-- timestamps
-
-Relationships:
-
-- Has many authored recipes through `recipes.user_id`.
-- Has many comments.
-- Belongs to many saved recipes through a separate favorites pivot table.
-
-Authored recipes and saved recipes are independent collections. A user's recipe list contains recipes they created and published; their WhiskList contains recipes they chose to save, regardless of who authored them.
-
-### Recipe
-
-Represents a recipe submitted by a registered user.
-
-Planned fields:
-
-- `id`
-- `user_id`
-- `title`
-- `slug`
-- `summary`
-- `preparation_minutes`
-- `cooking_minutes`
-- `servings`
-- `difficulty`
-- `status`
-- `published_at`
-- timestamps
-
-Relationships:
-
-- Belongs to one author (`User`).
-- Belongs to many categories.
-- Belongs to many ingredients.
-- Has many instruction steps.
-- Has many comments.
-- Has many images.
-- Is saved by many users.
-
-### Category
-
-Represents a reusable way to group recipes, such as `Dessert`, `Vegetarian`, or `Italian`.
-
-Planned fields:
-
-- `id`
-- `name`
-- `slug`
-- `description` (optional)
-- timestamps
-
-Relationships:
-
-- Belongs to many recipes through `category_recipe`.
-
-### Ingredient
-
-Represents one canonical ingredient that can be reused and searched consistently.
-
-Planned fields:
-
-- `id`
-- `name`
-- `slug`
-- timestamps
-
-Relationships:
-
-- Belongs to many recipes through `ingredient_recipe`.
-
-The `ingredient_recipe` pivot will also store:
-
-- `quantity`
-- `unit`
-- `notes` (optional)
-- `is_main`
-
-Ingredients will be managed by administrators so filtering is not damaged by duplicates such as `tomato`, `tomatoes`, and `fresh tomato`.
-
-### RecipeStep
-
-Represents one ordered instruction in a recipe.
-
-Planned fields:
-
-- `id`
-- `recipe_id`
-- `position`
-- `instruction`
-- timestamps
-
-Relationships:
-
-- Belongs to one recipe.
-- Has optional images.
-
-### Comment
-
-Represents a registered user's response to a recipe.
-
-Planned fields:
-
-- `id`
-- `user_id`
-- `recipe_id`
-- `body`
-- timestamps
-
-Relationships:
-
-- Belongs to one user.
-- Belongs to one recipe.
-- Has optional images.
-
-### Image
-
-Represents uploaded media through a polymorphic relationship.
-
-Planned fields:
-
-- `id`
-- `imageable_type`
-- `imageable_id`
-- `path`
-- `alt_text` (optional)
-- `position`
-- `is_thumbnail`
-- timestamps
-
-An image can belong to a recipe, recipe step, or comment. This allows the same storage and validation logic to support recipe thumbnails, final-dish photos, step photos, and commenter photos.
-
-### Saved recipes
-
-A many-to-many pivot will connect users to recipes they have saved. This relationship powers the **Add to my WhiskList**, **Remove from my WhiskList**, and **My WhiskList** functionality.
-
-## Relationship overview
-
-```text
-User       1 ---- N Recipe      (authored recipes)
-User       1 ---- N Comment
-Recipe     1 ---- N RecipeStep
-Recipe     1 ---- N Comment
-Recipe     N ---- N Category
-Recipe     N ---- N Ingredient  (quantity, unit, notes, is_main)
-User       N ---- N Recipe      (saved favorites / My WhiskList)
-Recipe     1 ---- N Image       (polymorphic)
-RecipeStep 1 ---- N Image       (polymorphic)
-Comment    1 ---- N Image       (polymorphic)
+```sh
+php vendor/bin/pest
 ```
 
-## Planned pages
+The tests use an in-memory SQLite database and cover recipe publishing, ownership, filtering, saved recipes, comments, and photo uploads.
 
-### Public pages
+## Future updates
 
-- `/` — welcome page with relevant recipe content.
-- `/recipes` — recipe search, filtering, sorting, and pagination.
-- `/recipes/{recipe}` — recipe details, ingredients, instructions, images, and comments.
-- `/categories` — category index.
-- `/categories/{category}` — published recipes within a category.
-- `/users/{user}` — profile and published recipes when the owner has made the profile public.
-
-### Authentication pages
-
-- `/register`
-- `/login`
-- Logout action
-
-### Authenticated pages
-
-- `/dashboard`
-- `/profile/edit`
-- `/my-recipes`
-- `/whisklist`
-- `/recipes/create`
-- `/recipes/{recipe}/edit`
-
-### Administrator pages
-
-- `/admin`
-- `/admin/categories`
-- `/admin/ingredients`
-- `/admin/recipes`
-- `/admin/comments`
-
-The final paths may change slightly while preserving RESTful route conventions and named routes.
-
-## Planned backend structure
-
-The application will use Laravel's conventional structure rather than introducing unnecessary architectural layers.
-
-Expected controllers include:
-
-- `HomeController`
-- `RecipeController`
-- `CommentController`
-- `CategoryController`
-- `ProfileController`
-- `WhiskListController`
-- Authentication controllers
-- Administrator controllers for categories, ingredients, recipes, and comments
-- Focused single-action controllers for non-CRUD operations when appropriate
-
-Expected supporting code includes:
-
-- Eloquent models and relationship methods
-- Database migrations
-- Model factories and seeders
-- Form Request validation classes
-- Authorization policies
-- Authentication and administrator middleware
-- Blade layouts and reusable components
-- Mail or notification classes where useful
-- Feature and unit tests
-
-## Business rules and authorization
-
-- Only authenticated users may create recipes, comment, or save recipes.
-- A regular user may edit or delete only their own recipes.
-- A regular user may edit or delete only their own comments.
-- Users can always access their own profile and dashboard.
-- Other visitors can access a user's profile only when `is_profile_public` is enabled.
-- Profile privacy does not hide published recipes from the public recipe pages; it hides the profile page and its grouped author information.
-- Only administrators may manage categories and canonical ingredients.
-- Administrators may moderate all recipes and comments.
-- Only published recipes are publicly visible.
-- Draft recipes are visible only to their author and administrators.
-- Every recipe must have at least one category, ingredient, instruction step, and thumbnail image.
-- The same ingredient cannot appear more than once in one recipe.
-- Uploaded files must pass type, size, and image validation.
-- Authorization will be enforced in controllers/policies even when a corresponding button is not displayed.
-
-## Recipe moderation
-
-The initial plan uses a lightweight publication workflow:
-
-- A user can save a recipe as a draft.
-- The recipe owner can publish their recipe when it is ready.
-- An administrator can unpublish or delete content that violates platform rules.
-
-Mandatory approval of every submitted recipe is not part of the initial MVP. It can be introduced later if the core implementation is completed early.
-
-## Search and filtering
-
-The recipe index will initially support:
-
-- Text search by recipe title.
-- Filtering by one or more categories.
-- Filtering for recipes containing all selected ingredients.
-- Pagination.
-
-Possible later filters include difficulty, maximum preparation time, maximum total time, newest recipes, and most-saved recipes.
-
-Queries will eager-load only the relationships required by each page to avoid N+1 database problems.
-
-## Seeded demonstration data
-
-Every model has a factory. The optional `DemoRecipeSeeder` creates fictional recipes and related demonstration data.
-
-To add demo recipes, ingredients, steps, comments, images, and saved lists to a migrated database, run:
-
-```bash
-php artisan db:seed --class=DemoRecipeSeeder
-```
-
-## Validation and testing strategy
-
-All user-controlled input will be validated, including nested recipe ingredients and steps. Invalid forms will preserve entered values where practical and display useful field-level error messages.
-
-Feature tests will cover the important application behavior:
-
-- Public and protected route access
-- Registration, login, and logout
-- Recipe CRUD and ownership restrictions
-- Comment CRUD and ownership restrictions
-- Administrator-only management
-- Ingredient and category relationships
-- Recipe publishing and moderation
-- Saving and removing WhiskList recipes
-- Search and ingredient filtering
-- File upload validation
-
-## Development milestones
-
-1. Establish authentication, roles, layout, and navigation.
-2. Implement the core models, migrations, factories, and seeders.
-3. Implement public recipe browsing and recipe detail pages.
-4. Implement authorized recipe creation and management.
-5. Add structured ingredients, categories, and ordered steps.
-6. Add image uploads and storage.
-7. Add comments and My WhiskList.
-8. Build the administrator area and moderation controls.
-9. Add search, filtering, caching, eager loading, and notifications.
-10. Complete tests, documentation, demonstration data, and presentation preparation.
-
-Each milestone should be delivered through small, focused commits.
-
-## Technology
-
-- PHP 8.5
-- Laravel 13
-- MySQL
-- Blade templates
-- Tailwind CSS 4
-- Vite
-- Pest
-- Composer and npm
-
-## Local development
-
-Detailed installation instructions will be finalized as the project develops. The current local workflow is:
-
-```bash
-composer install
-npm install
-php artisan migrate:fresh --seed
-composer run dev
-```
-
-The local `.env` file contains machine-specific settings and database credentials and must never be committed.
+- Editable recipe ratings and sorting by highest rated.
+- Ingredient groups and subgroups for browsing and filtering.
+- Additional recipe and step photos, plus photo attachments on comments.
+- Admin tools for moderating recipes and comments.
+- A dark theme and a backup and restore workflow for database records and uploaded photos.
