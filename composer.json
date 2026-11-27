@@ -40,7 +40,8 @@
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
+            "@php artisan config:clear",
+            "@php artisan app:key:ensure",
             "@php artisan migrate --force",
             "@php artisan homepage:warm",
             "npm install --ignore-scripts",
